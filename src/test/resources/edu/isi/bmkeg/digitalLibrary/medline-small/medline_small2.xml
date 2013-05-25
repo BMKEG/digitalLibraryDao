@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE MedlineCitationSet PUBLIC "-//NLM//DTD Medline Citation, 1st January, 2009//EN"
+                                    "http://www.nlm.nih.gov/databases/dtd/nlmmedline_090101.dtd">
+<MedlineCitationSet>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015721</PMID>
+<DateCreated>
+<Year>2005</Year>
+<Month>07</Month>
+<Day>14</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>26</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>1</Issue>
+<PubDate>
+<Year>1911</Year>
+<Month>Jul</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>FOREWORD.</ArticleTitle>
+<Pagination>
+<MedlinePgn>13-5</MedlinePgn>
+</Pagination>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234731</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015722</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>18</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>26</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>2</Issue>
+<PubDate>
+<Year>1911</Year>
+<Month>Oct</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>CLASSIFICATION USED AT THE LIBRARY OF THE COLLEGE OF PHYSICIANS, PHILADELPHIA.</ArticleTitle>
+<Pagination>
+<MedlinePgn>3-26</MedlinePgn>
+</Pagination>
+<AuthorList CompleteYN="Y">
+<Author ValidYN="Y">
+<LastName>Charles</LastName>
+<ForeName>F</ForeName>
+<Initials>F</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234568</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015723</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>18</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>26</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>2</Issue>
+<PubDate>
+<Year>1911</Year>
+<Month>Oct</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>NEWS ITEMS.</ArticleTitle>
+<Pagination>
+<MedlinePgn>26-7</MedlinePgn>
+</Pagination>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234569</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015724</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>18</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>26</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>2</Issue>
+<PubDate>
+<Year>1911</Year>
+<Month>Oct</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>THE PRESENT NUMBER OF THE BULLETIN.</ArticleTitle>
+<Pagination>
+<MedlinePgn>28</MedlinePgn>
+</Pagination>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234570</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015725</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>3</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Jan</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>THE CARE OF BOOKS WITH SPECIAL REFERENCE TO FINE BINDINGS.</ArticleTitle>
+<Pagination>
+<MedlinePgn>49-55</MedlinePgn>
+</Pagination>
+<AuthorList CompleteYN="Y">
+<Author ValidYN="Y">
+<LastName>Kimball</LastName>
+<ForeName>A R</ForeName>
+<Initials>AR</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234573</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015726</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>3</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Jan</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>HOSPITAL RECORDS IN RELATION TO THE HOSPITAL LIBRARY.</ArticleTitle>
+<Pagination>
+<MedlinePgn>55-7</MedlinePgn>
+</Pagination>
+<Affiliation>Treadwell Library, Massachusetts General Hospital, Boston, Mass.</Affiliation>
+<AuthorList CompleteYN="Y">
+<Author ValidYN="Y">
+<LastName>Myers</LastName>
+<ForeName>G W</ForeName>
+<Initials>GW</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234574</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015727</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>3</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Jan</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>NEWS ITEMS.</ArticleTitle>
+<Pagination>
+<MedlinePgn>57-8</MedlinePgn>
+</Pagination>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234575</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015728</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>3</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Jan</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>THE NEXT ANNUAL MEETING.</ArticleTitle>
+<Pagination>
+<MedlinePgn>59</MedlinePgn>
+</Pagination>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234571</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015729</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>4</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Apr</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>THE DISINFECTION OF BOOKS.</ArticleTitle>
+<Pagination>
+<MedlinePgn>61-6</MedlinePgn>
+</Pagination>
+<Affiliation>Harvard Medical School.</Affiliation>
+<AuthorList CompleteYN="Y">
+<Author ValidYN="Y">
+<LastName>Nice</LastName>
+<ForeName>L B</ForeName>
+<Initials>LB</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234577</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015730</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>4</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Apr</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>INSECTS DESTRUCTIVE TO BOOKS.</ArticleTitle>
+<Pagination>
+<MedlinePgn>67-75</MedlinePgn>
+</Pagination>
+<AuthorList CompleteYN="Y">
+<Author ValidYN="Y">
+<LastName>Reinick</LastName>
+<ForeName>W R</ForeName>
+<Initials>WR</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234578</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015731</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>1</Volume>
+<Issue>4</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Apr</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>DR. JOHN H. MUSSER.</ArticleTitle>
+<Pagination>
+<MedlinePgn>76</MedlinePgn>
+</Pagination>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234580</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015732</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>2</Volume>
+<Issue>1</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Jul</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>ANNUAL MEETING OF THE MEDICAL LIBRARY ASSOCIATION, 1912 and PRESIDENT'S ADDRESS.</ArticleTitle>
+<Pagination>
+<MedlinePgn>1-3</MedlinePgn>
+</Pagination>
+<AuthorList CompleteYN="Y">
+<Author ValidYN="Y">
+<LastName>Fisher</LastName>
+<ForeName>C P</ForeName>
+<Initials>CP</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234582</OtherID>
+</MedlineCitation>
+<MedlineCitation Owner="NLM" Status="PubMed-not-MEDLINE">
+<PMID>16015733</PMID>
+<DateCreated>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCreated>
+<DateCompleted>
+<Year>2006</Year>
+<Month>01</Month>
+<Day>19</Day>
+</DateCompleted>
+<DateRevised>
+<Year>2008</Year>
+<Month>11</Month>
+<Day>20</Day>
+</DateRevised>
+<Article PubModel="Print">
+<Journal>
+<ISSN IssnType="Print">0025-7338</ISSN>
+<JournalIssue CitedMedium="Print">
+<Volume>2</Volume>
+<Issue>1</Issue>
+<PubDate>
+<Year>1912</Year>
+<Month>Jul</Month>
+</PubDate>
+</JournalIssue>
+<Title>Bulletin of the Medical Library Association</Title>
+</Journal>
+<ArticleTitle>JOHN HERR MUSSER, M. D.</ArticleTitle>
+<Pagination>
+<MedlinePgn>3-5</MedlinePgn>
+</Pagination>
+<Affiliation>Philadelphia.</Affiliation>
+<AuthorList CompleteYN="Y">
+<Author ValidYN="Y">
+<LastName>Packard</LastName>
+<ForeName>F R</ForeName>
+<Initials>FR</Initials>
+</Author>
+</AuthorList>
+<Language>eng</Language>
+<PublicationTypeList>
+<PublicationType>Journal Article</PublicationType>
+</PublicationTypeList>
+</Article>
+<MedlineJournalInfo>
+<Country>United States</Country>
+<MedlineTA>Bull Med Libr Assoc</MedlineTA>
+<NlmUniqueID>0421037</NlmUniqueID>
+</MedlineJournalInfo>
+<OtherID Source="NLM">PMC234583</OtherID>
+</MedlineCitation>
+</MedlineCitationSet>
