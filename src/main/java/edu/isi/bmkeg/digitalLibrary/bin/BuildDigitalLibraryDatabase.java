@@ -23,6 +23,7 @@ import edu.isi.bmkeg.digitalLibrary.model.citations.ID;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.digitalLibrary.utils.JournalLookupPersistentObject;
 import edu.isi.bmkeg.digitalLibrary.utils.pubmed.EFetcher;
+import edu.isi.bmkeg.vpdmf.bin.BuildDatabaseFromVpdmfArchive;
 import edu.isi.bmkeg.vpdmf.controller.VPDMfKnowledgeBaseBuilder;
 import edu.isi.bmkeg.vpdmf.dao.CoreDaoImpl;
 import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
@@ -47,11 +48,13 @@ public class BuildDigitalLibraryDatabase {
 			URL url = ClassLoader.getSystemClassLoader().getResource("edu/isi/bmkeg/digitalLibrary/digitalLibrary_VPDMf.zip");
 			String buildFilePath = url.getFile();
 			File buildFile = new File( buildFilePath );
-			VPDMfKnowledgeBaseBuilder builder = new VPDMfKnowledgeBaseBuilder(buildFile, 
-					args[1], args[2], args[0]); 
 
-			builder.buildDatabaseFromArchive();
+			String[] newArgs = new String[] { 
+					buildFile.getPath(), args[0], args[1], args[2] 
+					};
 			
+			BuildDatabaseFromVpdmfArchive.main(newArgs);
+						
 			logger.info("Digital Library Database " + args[0] + " successfully created.");
 				
 		} catch (Exception e) {
