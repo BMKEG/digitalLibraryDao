@@ -343,7 +343,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		} else if( ftd.getLaswf() == null ){
 		
 			this.citDao.addSwfToFtd(pdf, ftd);
-			this.ftdDao.updateArticleDocument(ftd);
+			this.ftdDao.updateFTD(ftd);
 			
 		} else {
 		
