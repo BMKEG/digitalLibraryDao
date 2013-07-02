@@ -35,6 +35,7 @@
 									<groupId>edu.isi.bmkeg</groupId>
 									<artifactId>digitalLibrary</artifactId>
 									<type>zip</type>
+									<classifier>mysql</classifier>
 									<outputDirectory>${project.build.directory}/vpdmf/edu/isi/bmkeg/digitalLibrary</outputDirectory>
 									<destFileName>digitalLibrary-mysql.zip</destFileName>
 								</artifactItem>
