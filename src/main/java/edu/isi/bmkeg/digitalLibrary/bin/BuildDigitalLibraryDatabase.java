@@ -45,7 +45,7 @@ public class BuildDigitalLibraryDatabase {
 		
 		try { 
 
-			URL url = ClassLoader.getSystemClassLoader().getResource("edu/isi/bmkeg/digitalLibrary/digitalLibrary_VPDMf.zip");
+			URL url = ClassLoader.getSystemClassLoader().getResource("edu/isi/bmkeg/digitalLibrary/digitalLibrary-mysql.zip");
 			String buildFilePath = url.getFile();
 			File buildFile = new File( buildFilePath );
 

@@ -32,7 +32,7 @@ public class BuildNeuroscienceCorporaTest extends VPDMfTestCase {
 	public void setUp() throws Exception {
 		
 //		super.setUp("edu/isi/bmkeg/digitalLibrary/jcn2012_test_VPDMf.zip", false); 
-		super.setUp("edu/isi/bmkeg/digitalLibrary/digitalLibrary_VPDMf.zip", true); 
+		super.setUp("edu/isi/bmkeg/digitalLibrary/digitalLibrary-mysql.zip", true); 
 			
 		queryString1 = "(\"J Comp Neurol\"[TA])+AND+(2012[DP]+AND+(Smith[AU])";
 		queryString2 = "(\"Brain Res\"[TA])+AND+(2012[DP])+AND+(Smith[AU])";

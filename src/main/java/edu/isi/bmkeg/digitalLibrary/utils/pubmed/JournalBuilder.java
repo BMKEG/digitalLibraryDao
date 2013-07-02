@@ -74,7 +74,7 @@ public class JournalBuilder
 	public void dumpJournalListToTxtFiles(File dir) throws Exception {	
 
 		URL archiveUrl = this.getClass().getClassLoader().getResource(
-				"edu/isi/bmkeg/digitalLibrary/digitalLibrary_VPDMf.zip");
+				"edu/isi/bmkeg/digitalLibrary/digitalLibrary-mysql.zip");
 		File archiveFile = new File( archiveUrl.getPath() );
 		
 		VPDMfKnowledgeBaseBuilder builder = new VPDMfKnowledgeBaseBuilder(archiveFile, 

@@ -25,6 +25,6 @@
 		p:uri="#{bmkegProperties.dbUrl}" 
 		p:login="#{bmkegProperties.dbUser}" 
 		p:password="#{bmkegProperties.dbPassword}"
-		p:vpdmfArchivePath="classpath:/edu/isi/bmkeg/digitalLibrary/digitalLibrary_VPDMf.zip"/>
+		p:vpdmfArchivePath="classpath:/edu/isi/bmkeg/digitalLibrary/digitalLibrary-mysql.zip"/>
 		
 </beans>

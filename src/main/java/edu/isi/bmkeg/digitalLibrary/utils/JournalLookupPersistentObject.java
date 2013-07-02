@@ -48,7 +48,7 @@ public class JournalLookupPersistentObject {
 		// - this will throw an error if the database already exists.
 		//
 		URL archiveUrl = this.getClass().getClassLoader().getResource(
-				"edu/isi/bmkeg/digitalLibrary/digitalLibrary_VPDMf.zip");
+				"edu/isi/bmkeg/digitalLibrary/digitalLibrary-mysql.zip");
 		File archiveFile = new File( archiveUrl.getPath() );
 
 		CoreDaoImpl dlVpdmf = new CoreDaoImpl();

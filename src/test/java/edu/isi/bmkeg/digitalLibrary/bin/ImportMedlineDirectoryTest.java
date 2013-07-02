@@ -45,7 +45,7 @@ public class ImportMedlineDirectoryTest {
 			dbUrl = dbUrl.substring(l + 1, dbUrl.length());
 	
 		archiveFile = ctx.getResource(
-				"classpath:edu/isi/bmkeg/digitalLibrary/digitalLibrary_VPDMf.zip").getFile();
+				"classpath:edu/isi/bmkeg/digitalLibrary/digitalLibrary-mysql.zip").getFile();
 		bz2File = ctx.getResource(
 				"classpath:edu/isi/bmkeg/digitalLibrary/medline/medline09n0001.xml.bz2").getFile();
 		dir = bz2File.getParentFile();

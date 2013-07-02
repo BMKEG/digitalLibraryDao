@@ -44,7 +44,7 @@ public class AddArticleCitationsToCorpusTest {
 			dbUrl = dbUrl.substring(l + 1, dbUrl.length());
 	
 		archiveFile = ctx.getResource(
-				"classpath:edu/isi/bmkeg/digitalLibrary/digitalLibrary_VPDMf.zip").getFile();
+				"classpath:edu/isi/bmkeg/digitalLibrary/digitalLibrary-mysql.zip").getFile();
 		pmidFile = ctx.getResource(
 				"classpath:edu/isi/bmkeg/digitalLibrary/mgi/rockster/100.txt").getFile();
 		builder = new VPDMfKnowledgeBaseBuilder(archiveFile, 
