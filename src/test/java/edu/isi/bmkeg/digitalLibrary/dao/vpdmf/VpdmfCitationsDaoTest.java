@@ -605,7 +605,7 @@ public class VpdmfCitationsDaoTest {
 				
 	}
 	
-	@Test @Ignore("Fails")
+	@Test @Ignore("Fails because DAO should not relay in executeFullQuery")
 	public void testRetrieveCorpusArticlesPaged() throws Exception {
 	
 		int c0cnt = 2;	// number of articles with no corpus

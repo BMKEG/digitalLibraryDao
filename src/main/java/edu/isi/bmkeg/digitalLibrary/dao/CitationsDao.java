@@ -105,12 +105,16 @@ public interface CitationsDao {
 	// ~~~~~~~~~~~~~~~~~~~~
 
 	//	It should look for all Publications, not just the Articles subset.
+	@Deprecated
 	public List<ArticleCitation> retrieveAllArticles() throws Exception;
 	
+	@Deprecated
 	public List<ArticleCitation> retrieveAllArticlesPaged(int offset, int cnt) throws Exception;
 
+	@Deprecated
 	public List<ArticleCitation> retrieveCorpusArticlesPaged(String corpusName, int offset, int pageSize) throws Exception;
 
+	@Deprecated
 	public List<Journal> retrieveAllJournalsPaged(int offset, int cnt) throws Exception;
 
 	// ~~~~~~~~~~~~~~

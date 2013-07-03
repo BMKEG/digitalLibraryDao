@@ -78,7 +78,8 @@ public class AddArticleCitationsToCorpusTest {
 	public final void testRunExecWithFullPaths() throws Exception {
 				
 		String[] args = new String[] { 
-				"test", "this is a test", "tester", dbUrl, login, password
+				"-name", "test", "-desc", "this is a test", "-owner", "tester", 
+				"-db", dbUrl, "-l", login, "-p", password
 				};
 
 		EditArticleCorpus.main(args);

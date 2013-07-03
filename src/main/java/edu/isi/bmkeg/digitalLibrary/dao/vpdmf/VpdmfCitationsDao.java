@@ -452,6 +452,7 @@ public class VpdmfCitationsDao implements CitationsDao {
 	}
 
 	// TODO refactor to use generic method from CoreDao
+	@Deprecated
 	public List<ArticleCitation> retrieveAllArticles() throws Exception {
 
 		try {
@@ -626,6 +627,7 @@ return false;
 	// ~~~~~~~~~~~~~~~~~~~~
 
 	// TODO refactor to use generic method from CoreDao
+	@Deprecated
 	public List<ArticleCitation> retrieveAllArticlesPaged(int offset,
 			int pageSize) throws Exception {
 		
@@ -666,6 +668,7 @@ return false;
 	}
 
 	// TODO refactor to use generic method from CoreDao
+	@Deprecated
 	public List<ArticleCitation> retrieveCorpusArticlesPaged(String corpusName,
 			int offset, int pageSize) throws Exception {
 		
@@ -709,6 +712,7 @@ return false;
 	}
 
 	// TODO refactor to use generic method from CoreDao
+	@Deprecated
 	public List<Journal> retrieveAllJournalsPaged(int offset, int pageSize)
 			throws Exception {
 		try {

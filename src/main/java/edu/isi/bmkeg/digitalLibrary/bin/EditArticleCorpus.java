@@ -4,6 +4,9 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
@@ -13,47 +16,70 @@ import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 
 public class EditArticleCorpus {
 
-	public static String USAGE = "Either adds or edits a uniquely named ArticleCorpus.\n" +
-			"arguments: <corpus-name> <description> <owner-name> " + 
-			"<dbName> <login> <password> "; 
+	public static class Options {
+
+		@Option(name = "-name", usage = "Corpus name", required = true, metaVar = "NAME")
+		public String name;
+		
+		@Option(name = "-desc", usage = "Corpus description", required = true, metaVar = "DESCRIPTION")
+		public String description;
+		
+		@Option(name = "-owner", usage = "Corpus owner", required = true, metaVar = "OWNER")
+		public String owner;
+		
+		@Option(name = "-l", usage = "Database login", required = true, metaVar = "LOGIN")
+		public String login = "";
+
+		@Option(name = "-p", usage = "Database password", required = true, metaVar = "PASSWD")
+		public String password = "";
+
+		@Option(name = "-db", usage = "Database name", required = true, metaVar  = "DBNAME")
+		public String dbName = "";
+
+		
+	}
 
 	private static Logger logger = Logger.getLogger(EditArticleCorpus.class);
-
-	private VPDMf top;
 	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
 
-		if (args.length != 6) {
-			System.err.println(USAGE);
-			System.exit(1);
+		Options options = new Options();
+		
+		CmdLineParser parser = new CmdLineParser(options);
+
+		try {
+			
+			parser.parseArgument(args);
+		
+		} catch (CmdLineException e) {
+			System.err.println(e.getMessage());
+			System.err.print("Arguments: ");
+			parser.printSingleLineUsage(System.err);
+			System.err.println("Either adds or edits a uniquely named ArticleCorpus.");
+			System.err.println("\n\n Options: \n");
+			parser.printUsage(System.err);
+			System.exit(-1);
 		}
-		
-		String name = args[0];
-		String description = args[1];
-		String owner = args[2];
-		String dbName = args[3];
-		String login = args[4];
-		String password = args[5];
-		
+				
 		DigitalLibraryEngine de = null;
 		
 		de = new DigitalLibraryEngine();
-		de.initializeVpdmfDao(login, password, dbName);
+		de.initializeVpdmfDao(options.login, options.password, options.dbName);
 
 		Corpus_qo qc = new Corpus_qo();
-		qc.setName(name);
+		qc.setName(options.name);
 		List<LightViewInstance> lviList = de.getDigLibDao().listArticleCorpus(qc);
 		
 		if( lviList.size() == 0 ) {
 
 			Corpus c = new Corpus();
 			
-			c.setName(name);
-			c.setDescription(description);
-			c.setOwner(owner);
+			c.setName(options.name);
+			c.setDescription(options.description);
+			c.setOwner(options.owner);
 			Date d = new Date();
 			c.setDate(d.toString());
 			
@@ -65,9 +91,9 @@ public class EditArticleCorpus {
 			
 			Corpus c = de.getDigLibDao().findArticleCorpusById( lvi.getVpdmfId() );
 			
-			c.setName(name);
-			c.setDescription(description);
-			c.setOwner(owner);
+			c.setName(options.name);
+			c.setDescription(options.description);
+			c.setOwner(options.owner);
 			
 			de.getDigLibDao().updateArticleCorpus(c);
 			
