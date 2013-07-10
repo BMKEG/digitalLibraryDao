@@ -11,7 +11,6 @@ import org.kohsuke.args4j.Option;
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Corpus_qo;
-import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 
 public class EditArticleCorpus {
@@ -26,6 +25,9 @@ public class EditArticleCorpus {
 		
 		@Option(name = "-owner", usage = "Corpus owner", required = true, metaVar = "OWNER")
 		public String owner;
+		
+		@Option(name = "-regex", usage = "Regular expression to recognize incoming files", required = false, metaVar = "REGEX")
+		public String regex;
 		
 		@Option(name = "-l", usage = "Database login", required = true, metaVar = "LOGIN")
 		public String login = "";
@@ -80,6 +82,9 @@ public class EditArticleCorpus {
 			c.setName(options.name);
 			c.setDescription(options.description);
 			c.setOwner(options.owner);
+			
+			c.setRegex(options.regex.replaceAll("\\\\", "__BACKSLASH__"));
+			
 			Date d = new Date();
 			c.setDate(d.toString());
 			
@@ -93,7 +98,13 @@ public class EditArticleCorpus {
 			
 			c.setName(options.name);
 			c.setDescription(options.description);
+			
+			c.setRegex(options.regex.replaceAll("\\\\", "__BACKSLASH__"));
+			
 			c.setOwner(options.owner);
+			
+			Date d = new Date();
+			c.setDate(d.toString());
 			
 			de.getDigLibDao().updateArticleCorpus(c);
 			

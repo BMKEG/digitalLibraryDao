@@ -28,16 +28,20 @@ import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.model.citations.ID;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ArticleCitation_qo;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ID_qo;
 import edu.isi.bmkeg.digitalLibrary.utils.FileLookupPersistentObject;
 import edu.isi.bmkeg.digitalLibrary.utils.JournalLookupPersistentObject;
 import edu.isi.bmkeg.digitalLibrary.utils.pubmed.EFetcher;
 import edu.isi.bmkeg.ftd.dao.FtdDao;
 import edu.isi.bmkeg.ftd.dao.impl.FtdDaoImpl;
 import edu.isi.bmkeg.ftd.model.FTD;
+import edu.isi.bmkeg.ftd.model.qo.FTD_qo;
 import edu.isi.bmkeg.lapdf.controller.LapdfVpdmfEngine;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
 import edu.isi.bmkeg.utils.Converters;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
+import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 
 public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
@@ -218,9 +222,56 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 		Integer id = new Integer(m.group(1));
 
-		ArticleCitation ac = null;
-		FTD ftd = null;
+		LightViewInstance ftdLvi = null;
+		LightViewInstance acLvi = null;
 		if( idCode.equals( "pmid" ) ) {
+			
+			FTD_qo ftdQ = new FTD_qo();
+			ArticleCitation_qo acQ = new ArticleCitation_qo();
+			acQ.setPmid(id.toString());
+			ftdQ.setCitation(acQ);
+			
+			List<LightViewInstance> ftdL = this.citDao.getCoreDao().list(ftdQ, "ArticleDocument");
+			if( ftdL.size() == 1 ) 
+				ftdLvi = ftdL.get(0);
+			
+			List<LightViewInstance> acL = this.citDao.getCoreDao().list(acQ, "ArticleCitation");
+			if( acL.size() == 1 ) 
+				acLvi = acL.get(0);
+			
+			
+		} else {
+			
+			FTD_qo ftdQ = new FTD_qo();
+			ArticleCitation_qo acQ = new ArticleCitation_qo();
+			ftdQ.setCitation(acQ);
+			ID_qo idQ = new ID_qo();
+			acQ.getIds().add(idQ);
+			idQ.setIdType(idCode);
+			idQ.setIdValue(id.toString());
+
+			List<LightViewInstance> ftdL = this.citDao.getCoreDao().list(ftdQ, "ArticleDocument");			
+			if( ftdL.size() == 1 ) 
+				ftdLvi = ftdL.get(0);
+
+			List<LightViewInstance> acL = this.citDao.getCoreDao().list(acQ, "ArticleCitation");
+			if( acL.size() == 1 ) 
+				acLvi = acL.get(0);
+
+		}
+		
+		if( ftdLvi != null ) {
+			logger.info("pdf already uploaded (" + idCode + ":" + id + ")");
+			Map<Integer,Long> map = new HashMap<Integer,Long>();
+			String[] acIdx = acLvi.getIndexTuple().split("<\\|>");
+			Integer pmid = new Integer(acIdx[8]);
+			map.put(pmid, acLvi.getVpdmfId());
+			return map;
+		}
+		
+		ArticleCitation ac = null;
+		if( idCode.equals( "pmid" ) ) {
+			
 			ac = this.citDao.findArticleByPmid(id);			
 			if (ac == null) {
 				Set<Integer> ii = new HashSet<Integer>();
@@ -230,22 +281,14 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 					throw new Exception( idCode + ":" + id + " cannot be inserted");							
 				}
 				ac = ll.get(0);
-			}
-			ftd = this.citDao.findArticleDocumentByPmid(id);
+			}		
+			
 		} else {
 			ac = this.citDao.findArticleById(idCode, id);
-			ftd = this.citDao.findArticleDocumentById(idCode, id);
 		}
 		
 		if (ac == null) {
 			throw new Exception( idCode + ":" + id + " cannot found in database");
-		}
-
-		if( ftd != null ) {
-			logger.info("pdf already uploaded (" + idCode + ":" + id + ")");
-			Map<Integer,Long> map = new HashMap<Integer,Long>();
-			map.put(ac.getPmid(), ac.getVpdmfId());
-			return map;
 		}
 		
 		LapdfDocument doc = this.blockifyPdfFile(pdf);
