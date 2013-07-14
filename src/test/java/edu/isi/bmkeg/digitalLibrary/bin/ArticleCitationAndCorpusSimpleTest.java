@@ -91,6 +91,7 @@ public class ArticleCitationAndCorpusSimpleTest {
 				
 		String[] args = new String[] { 
 				"-name", "test", "-desc", "this is a test", "-owner", "tester", 
+				"-regex", "_(.*A.*)\\.pdf",
 				"-db", dbUrl, "-l", login, "-p", password
 				};
 
@@ -103,6 +104,7 @@ public class ArticleCitationAndCorpusSimpleTest {
 
 		String[] args = new String[] { 
 				"-name", "test", "-desc", "this is a test", "-owner", "tester", 
+				"-regex", "_(.*A.*)\\.pdf",				
 				"-db", dbUrl, "-l", login, "-p", password
 				};
 
@@ -139,7 +141,8 @@ public class ArticleCitationAndCorpusSimpleTest {
 	public final void addRemoveArticleCorpus() throws Exception {
 				
 		String[] args = new String[] { 
-				"-name", "test", "-desc", "this is a test", "-owner", "tester", 
+				"-name", "test", "-desc", "this is a test", "-owner", "tester",
+				"-regex", "_(.*A.*)\\.pdf",				
 				"-db", dbUrl, "-l", login, "-p", password
 				};
 
