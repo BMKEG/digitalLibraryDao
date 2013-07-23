@@ -60,7 +60,7 @@ public class EditArticleCorpus {
 			System.err.println(e.getMessage());
 			System.err.print("Arguments: ");
 			parser.printSingleLineUsage(System.err);
-			System.err.println("Either adds or edits a uniquely named ArticleCorpus.");
+			System.err.println("\nEither adds or edits a uniquely named ArticleCorpus.");
 			System.err.println("\n\n Options: \n");
 			parser.printUsage(System.err);
 			System.exit(-1);
