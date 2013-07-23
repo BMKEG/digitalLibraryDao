@@ -79,6 +79,7 @@ public class AddArticleCitationsToCorpusTest {
 				
 		String[] args = new String[] { 
 				"-name", "test", "-desc", "this is a test", "-owner", "tester", 
+				"-regex", "_(.*A.*)\\.pdf",				
 				"-db", dbUrl, "-l", login, "-p", password
 				};
 
