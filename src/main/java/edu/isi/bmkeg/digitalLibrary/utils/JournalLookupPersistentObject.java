@@ -12,10 +12,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import edu.isi.bmkeg.digitalLibrary.dao.vpdmf.VpdmfCitationsDao;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.utils.Converters;
-import edu.isi.bmkeg.vpdmf.controller.VPDMfKnowledgeBaseBuilder;
 import edu.isi.bmkeg.vpdmf.dao.CoreDaoImpl;
 import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
 import edu.isi.bmkeg.vpdmf.model.definitions.ViewDefinition;
@@ -53,7 +51,6 @@ public class JournalLookupPersistentObject {
 
 		CoreDaoImpl dlVpdmf = new CoreDaoImpl();
 		dlVpdmf.init(login, password, dbName);
-		VpdmfCitationsDao citDao = new VpdmfCitationsDao(dlVpdmf);
 			
 		//
 		// Query this database to generate a local map of journals indexed by name.
@@ -113,6 +110,24 @@ public class JournalLookupPersistentObject {
 
 			logger.info("No journal lookup file found, regenerating the file.");
 			this.jLookup = this.regenerateJournalLookupFile(dbName, login, password);
+
+		} else {
+
+			logger.info("Journal lookup file found, loading directly from disk");
+			byte[] b = Converters.fileContentsToBytesArray(jLookupFile);
+			Object o = Converters.byteArrayToObject(b);
+			this.jLookup = (Map<String, Journal>) o;
+		
+		}
+		
+		return jLookup;
+	}
+
+	public Map<String, Journal> readJLookup() throws Exception {
+
+		if( !jLookupFile.exists() ) {
+
+			throw new Exception("No journal lookup file found, need to regenerate the file.");
 
 		} else {
 

@@ -4,22 +4,13 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import edu.isi.bmkeg.digitalLibrary.dao.vpdmf.VpdmfCitationsDao;
-import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.utils.Converters;
-import edu.isi.bmkeg.vpdmf.controller.VPDMfKnowledgeBaseBuilder;
 import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
-import edu.isi.bmkeg.vpdmf.model.definitions.ViewDefinition;
-import edu.isi.bmkeg.vpdmf.model.instances.ViewBasedObjectGraph;
-import edu.isi.bmkeg.vpdmf.model.instances.ViewInstance;
 
 public class FileLookupPersistentObject {
 

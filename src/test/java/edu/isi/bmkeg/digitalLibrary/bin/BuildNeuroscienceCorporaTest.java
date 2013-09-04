@@ -1,19 +1,13 @@
 package edu.isi.bmkeg.digitalLibrary.bin;
 
 import java.io.File;
-import java.sql.SQLException;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import edu.isi.bmkeg.digitalLibrary.dao.vpdmf.VpdmfCitationsDao;
-import edu.isi.bmkeg.utils.springContext.AppContext;
-import edu.isi.bmkeg.utils.springContext.BmkegProperties;
+import edu.isi.bmkeg.digitalLibrary.dao.impl.ExtendedDigitalLibraryDaoImpl;
 import edu.isi.bmkeg.vpdmf.controller.VPDMfKnowledgeBaseBuilder;
 import edu.isi.bmkeg.vpdmf.test.VPDMfTestCase;
 
@@ -24,7 +18,7 @@ public class BuildNeuroscienceCorporaTest extends VPDMfTestCase {
 	File archiveFile, pmidFile_allChecked, triageCodes, pdfDir;
 	VPDMfKnowledgeBaseBuilder builder;
 	
-	VpdmfCitationsDao dao;
+	ExtendedDigitalLibraryDaoImpl dao;
 	
 	String queryString1, queryString2, queryString3;
 	

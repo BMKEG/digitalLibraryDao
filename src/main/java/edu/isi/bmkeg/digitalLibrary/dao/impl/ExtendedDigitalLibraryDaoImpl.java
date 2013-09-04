@@ -1,4 +1,4 @@
-package edu.isi.bmkeg.digitalLibrary.dao.vpdmf;
+package edu.isi.bmkeg.digitalLibrary.dao.impl;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -6,8 +6,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -19,15 +22,18 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import edu.isi.bmkeg.digitalLibrary.dao.CitationsDao;
+import edu.isi.bmkeg.digitalLibrary.dao.ExtendedDigitalLibraryDao;
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.digitalLibrary.model.citations.LiteratureCitation;
 import edu.isi.bmkeg.ftd.model.FTD;
+import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
 import edu.isi.bmkeg.uml.model.UMLclass;
 import edu.isi.bmkeg.utils.Converters;
+import edu.isi.bmkeg.utils.xml.XmlBindingTools;
 import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngine;
 import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.VPDMfChangeEngineInterface;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
@@ -43,14 +49,14 @@ import edu.isi.bmkeg.vpdmf.model.instances.ViewBasedObjectGraph;
 import edu.isi.bmkeg.vpdmf.model.instances.ViewInstance;
 
 @Repository
-public class VpdmfCitationsDao implements CitationsDao {
+public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao {
 
-	private static Logger logger = Logger.getLogger(VpdmfCitationsDao.class);
+	private static Logger logger = Logger.getLogger(ExtendedDigitalLibraryDaoImpl.class);
 
 	// ~~~~~~~~~
 	// Constants
 	// ~~~~~~~~~
-	private static final String CITATION_VIEW_NAME = "LiteratureCitations";
+	private static final String CITATION_VIEW_NAME = "LiteratureCitation";
 	private static final String ARTICLE_VIEW_NAME = "ArticleCitation";
 	private static final String JOURNAL_VIEW_NAME = "Journal";
 	private static final String CORPUS_VIEW_NAME = "Corpus";
@@ -61,11 +67,10 @@ public class VpdmfCitationsDao implements CitationsDao {
 	// ~~~~~~~~~~~~
 	// Constructors
 	// ~~~~~~~~~~~~
-	public VpdmfCitationsDao() throws Exception {
-//		this.coreDao = new CoreDaoImpl();
-	}
 
-	public VpdmfCitationsDao(CoreDao coreDao) {
+	public ExtendedDigitalLibraryDaoImpl() throws Exception {}
+
+	public ExtendedDigitalLibraryDaoImpl(CoreDao coreDao) throws Exception {
 		this.coreDao = coreDao;
 	}
 
@@ -92,232 +97,6 @@ public class VpdmfCitationsDao implements CitationsDao {
 		return coreDao.getTop();
 	}
 
-	// ~~~~~~~~~~~~~~~
-	// Count functions
-	// ~~~~~~~~~~~~~~~
-
-	public int countCitations() throws Exception {
-
-		return getCoreDao().countView(CITATION_VIEW_NAME);
-
-	}
-
-	public int countArticles() throws Exception {
-
-		return getCoreDao().countView(ARTICLE_VIEW_NAME);
-
-	}
-
-	public int countCorpusArticles(String corpusName) throws Exception {
-
-		try {
-
-			getCe().connectToDB();
-			getCe().turnOffAutoCommit();
-
-			ViewDefinition vd = getTop().getViews().get(ARTICLE_VIEW_NAME);
-//			ViewBasedObjectGraph vbog = generateVbogs().get(ARTICLE_VIEW_NAME);
-
-			ViewInstance vi = new ViewInstance(vd);
-
-			AttributeInstance ai = vi.readAttributeInstance(
-					"]Corpus|Corpus.name", 0);
-			ai.writeValueString(corpusName);
-
-			return getCe().executeCountQuery(vi);
-			
-		} finally {
-			getCe().closeDbConnection();
-		}
-
-	}
-
-	// ~~~~~~~~~~~~~~~~~~~
-	// Insert Functions
-	// ~~~~~~~~~~~~~~~~~~~
-	public void insertArticleCitation(ArticleCitation article) throws Exception {
-
-		getCoreDao().insert(article, "ArticleCitation");
-
-	}
-
-	public void insertJournal(Journal journal) throws Exception {
-
-		getCoreDao().insertVBOG(journal, "Journal");
-
-	}
-
-	public void insertCorpus(Corpus corpus) throws Exception {
-
-		getCoreDao().insertVBOG(corpus, "Corpus");
-
-	}
-
-	public void insertArticleCorpus(Corpus corpus) throws Exception {
-
-		getCoreDao().insertVBOG(corpus, "ArticleCorpus");
-
-	}
-
-	// ~~~~~~~~~~~~~~~~~~~
-	// Update Functions
-	// ~~~~~~~~~~~~~~~~~~~
-	// TODO make this a generic method in the CoreDao class
-	public void updateArticleCitation(ArticleCitation article) throws Exception {
-
-		try {
-
-			getCe().connectToDB();
-			getCe().turnOffAutoCommit();
-
-			ViewInstance vi0;
-			try {
-				vi0 = getCe().executeUIDQuery(ARTICLE_VIEW_NAME,
-						article.getVpdmfId());
-			} catch (Exception e) {
-				throw new Exception(
-						"No article with id: "
-								+ article.getVpdmfId()
-								+ " was found for updating. You might want to use insertArtcileCitation instead.");
-			}
-
-			getCe().storeViewInstanceForUpdate(vi0);
-
-			ViewBasedObjectGraph vbog = generateVbogs().get(ARTICLE_VIEW_NAME);
-
-			ViewInstance vi1 = vbog.objectGraphToView(article);
-			Map<String, Object> objMap = vbog.getObjMap();
-
-			getCe().executeUpdateQuery(vi1);
-
-			Iterator<String> keyIt = objMap.keySet().iterator();
-			while (keyIt.hasNext()) {
-				String key = keyIt.next();
-				PrimitiveInstance pi = (PrimitiveInstance) vi1.getSubGraph().getNodes().get(key);
-				Object o = objMap.get(key);
-				vbog.primitiveToObject(pi, o, true);
-			}
-
-			getCe().commitTransaction();
-
-		} catch (Exception e) {
-
-			getCe().rollbackTransaction();
-
-			throw e;
-
-		} finally {
-
-			getCe().closeDbConnection();
-
-		}
-	}
-
-	// TODO make this a generic method in the CoreDao class
-	public void updateJournal(Journal journal) throws Exception {
-
-		try {
-
-			getCe().connectToDB();
-			getCe().turnOffAutoCommit();
-
-			ViewInstance vi0;
-			try {
-				vi0 = getCe().executeUIDQuery(JOURNAL_VIEW_NAME,
-						journal.getVpdmfId());
-			} catch (Exception e) {
-				throw new Exception(
-						"No journal with id: "
-								+ journal.getVpdmfId()
-								+ " was found for updating. You might want to use insertJournal instead.");
-			}
-
-			getCe().storeViewInstanceForUpdate(vi0);
-
-			ViewBasedObjectGraph vbog = generateVbogs().get(JOURNAL_VIEW_NAME);
-
-			ViewInstance vi1 = vbog.objectGraphToView(journal);
-			Map<String, Object> objMap = vbog.getObjMap();
-
-			getCe().executeUpdateQuery(vi1);
-
-			Iterator<String> keyIt = objMap.keySet().iterator();
-			while (keyIt.hasNext()) {
-				String key = keyIt.next();
-				PrimitiveInstance pi = (PrimitiveInstance) vi1.getSubGraph()
-						.getNodes().get(key);
-				Object o = objMap.get(key);
-				vbog.primitiveToObject(pi, o, true);
-			}
-
-			getCe().commitTransaction();
-
-		} catch (Exception e) {
-
-			getCe().rollbackTransaction();
-
-			throw e;
-
-		} finally {
-
-			getCe().closeDbConnection();
-
-		}
-
-	}
-
-	// TODO make this a generic method in the CoreDao class
-	public void updateCorpus(Corpus corpus) throws Exception {
-
-		try {
-
-			getCe().connectToDB();
-			getCe().turnOffAutoCommit();
-
-			ViewInstance vi0;
-			try {
-				vi0 = getCe().executeUIDQuery(CORPUS_VIEW_NAME,
-						corpus.getVpdmfId());
-			} catch (Exception e) {
-				throw new Exception("No corpus with id: " + corpus.getVpdmfId()
-						+ " was found for updating. "
-						+ " You may need to insert this Corpus first.");
-			}
-
-			getCe().storeViewInstanceForUpdate(vi0);
-
-			ViewBasedObjectGraph vbog = generateVbogs().get(CORPUS_VIEW_NAME);
-
-			ViewInstance vi1 = vbog.objectGraphToView(corpus);
-			Map<String, Object> objMap = vbog.getObjMap();
-
-			getCe().executeUpdateQuery(vi1);
-
-			Iterator<String> keyIt = objMap.keySet().iterator();
-			while (keyIt.hasNext()) {
-				String key = keyIt.next();
-				PrimitiveInstance pi = (PrimitiveInstance) vi1.getSubGraph()
-						.getNodes().get(key);
-				Object o = objMap.get(key);
-				vbog.primitiveToObject(pi, o, true);
-			}
-
-			getCe().commitTransaction();
-
-		} catch (Exception e) {
-
-			getCe().rollbackTransaction();
-
-			throw e;
-
-		} finally {
-
-			getCe().closeDbConnection();
-
-		}
-
-	}
-
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Remove x from y functions
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -335,7 +114,7 @@ public class VpdmfCitationsDao implements CitationsDao {
 			getCe().connectToDB();
 			getCe().turnOffAutoCommit();
 
-			getCe().deleteView(ARTICLE_VIEW_NAME, id );
+			getCe().executeDeleteQuery(ARTICLE_VIEW_NAME, id );
 
 		} catch (Exception e) {
 
@@ -357,7 +136,7 @@ public class VpdmfCitationsDao implements CitationsDao {
 			getCe().connectToDB();
 			getCe().turnOffAutoCommit();
 
-			getCe().deleteView(CORPUS_VIEW_NAME, corpus.getVpdmfId() );
+			getCe().executeDeleteQuery(CORPUS_VIEW_NAME, corpus.getVpdmfId() );
 
 		} catch (Exception e) {
 
@@ -376,40 +155,6 @@ public class VpdmfCitationsDao implements CitationsDao {
 	// ~~~~~~~~~~~~~~~~~~~~
 	// Find by id Functions
 	// ~~~~~~~~~~~~~~~~~~~~
-	
-	public ArticleCitation findArticleByVpdmfId(long id) throws Exception {
-
-		ArticleCitation a = (ArticleCitation) getCoreDao().findVBOGById(id,
-				ARTICLE_VIEW_NAME);
-		// HACK to get around viewToObjectGraph() bug
-		// TODO: GULLY: Please fix this
-		if (a.getCorpora().size() == 1
-				&& a.getCorpora().get(0).getVpdmfId() == 0)
-			a.getCorpora().clear();
-
-		return a;
-
-	}
-
-	public ArticleCitation findArticleByPmid(Integer pmid) throws Exception {
-
-		ArticleCitation a = (ArticleCitation) getCoreDao()
-				.findVBOGByAttributeValue("ArticleCitation",
-						"LiteratureCitation", "ArticleCitation", "pmid",
-						pmid + "");
-
-		if (a == null)
-			return null;
-
-		// HACK to get around viewToObjectGraph() bug
-		// TODO: GULLY: Please fix this
-		if (a.getCorpora() != null && a.getCorpora().size() == 1
-				&& a.getCorpora().get(0).getVpdmfId() == 0)
-			a.getCorpora().clear();
-
-		return a;
-
-	}
 
 	public ArticleCitation findArticleByPmid(int pmid) throws Exception {
 
@@ -424,7 +169,7 @@ public class VpdmfCitationsDao implements CitationsDao {
 		getCe().turnOffAutoCommit();
 
 		ViewDefinition vd = getTop().getViews().get(ARTICLE_VIEW_NAME);
-		ClassLoader cl = VpdmfCitationsDao.class.getClassLoader();
+		ClassLoader cl = ExtendedDigitalLibraryDaoImpl.class.getClassLoader();
 		ViewBasedObjectGraph vbog = new ViewBasedObjectGraph(getTop(), cl, ARTICLE_VIEW_NAME);
 
 		ViewInstance vi = new ViewInstance(vd);
@@ -451,45 +196,6 @@ public class VpdmfCitationsDao implements CitationsDao {
 
 	}
 
-	// TODO refactor to use generic method from CoreDao
-	@Deprecated
-	public List<ArticleCitation> retrieveAllArticles() throws Exception {
-
-		try {
-
-			getCe().connectToDB();
-			getCe().turnOffAutoCommit();
-
-			ViewDefinition vd = getTop().getViews().get(ARTICLE_VIEW_NAME);
-			ViewBasedObjectGraph vbog = generateVbogs().get(ARTICLE_VIEW_NAME);
-
-			ViewInstance vi = new ViewInstance(vd);
-
-			List<ArticleCitation> l = new ArrayList<ArticleCitation>();
-			Iterator<ViewInstance> it = getCe().executeFullQuery(vi).iterator();
-			while (it.hasNext()) {
-				ViewInstance lvi = it.next();
-
-				vbog.viewToObjectGraph(lvi);
-				ArticleCitation a = (ArticleCitation) vbog.readPrimaryObject();
-
-				l.add(a);
-
-			}
-
-			return l;
-
-		} finally {
-			getCe().closeDbConnection();
-		}
-
-	}
-
-	public Journal findJournalById(long id) throws Exception {
-
-		return (Journal) getCoreDao().findVBOGById(id, JOURNAL_VIEW_NAME);
-
-	}
 
 	// TODO refactor to use generic method from CoreDao
 	public Journal findJournalByAbbr(String abbr) throws Exception {
@@ -531,12 +237,6 @@ public class VpdmfCitationsDao implements CitationsDao {
 
 	}
 
-	public Corpus findCorpusById(long id) throws Exception {
-
-		return (Corpus) getCoreDao().findVBOGById(id, CORPUS_VIEW_NAME);
-
-	}
-
 	public Corpus findCorpusByName(String name) throws Exception {
 
 		return (Corpus) getCoreDao().findVBOGByAttributeValue(CORPUS_VIEW_NAME,
@@ -550,7 +250,7 @@ public class VpdmfCitationsDao implements CitationsDao {
 		getCe().turnOffAutoCommit();
 
 		ViewDefinition vd = getTop().getViews().get("ArticleDocument");
-		ClassLoader cl = VpdmfCitationsDao.class.getClassLoader();
+		ClassLoader cl = ExtendedDigitalLibraryDaoImpl.class.getClassLoader();
 		ViewBasedObjectGraph vbog = new ViewBasedObjectGraph(getTop(), cl, "ArticleDocument");
 
 		ViewInstance vi = new ViewInstance(vd);
@@ -581,7 +281,7 @@ public class VpdmfCitationsDao implements CitationsDao {
 		getCe().turnOffAutoCommit();
 
 		ViewDefinition vd = getTop().getViews().get("ArticleDocument");
-		ClassLoader cl = VpdmfCitationsDao.class.getClassLoader();
+		ClassLoader cl = ExtendedDigitalLibraryDaoImpl.class.getClassLoader();
 		ViewBasedObjectGraph vbog = new ViewBasedObjectGraph(getTop(), cl, "ArticleDocument");
 
 		ViewInstance vi = new ViewInstance(vd);
@@ -608,143 +308,6 @@ public class VpdmfCitationsDao implements CitationsDao {
 
 	}
 	
-	// ~~~~~~~~~~~~~~~~~~~~
-	// check Functions
-	// ~~~~~~~~~~~~~~~~~~~~
-	/**
-	 * Fastest possible check to see if Article in database;
-	 */
-	public boolean checkArticleByPmid(int pmid) throws Exception {
-		
-return false;
-		
-		
-	}
-	
-	
-	// ~~~~~~~~~~~~~~~~~~~~
-	// Retrieve functions
-	// ~~~~~~~~~~~~~~~~~~~~
-
-	// TODO refactor to use generic method from CoreDao
-	@Deprecated
-	public List<ArticleCitation> retrieveAllArticlesPaged(int offset,
-			int pageSize) throws Exception {
-		
-		try {
-
-			getCe().connectToDB();
-			getCe().turnOffAutoCommit();
-
-			ViewDefinition vd = getTop().getViews().get(ARTICLE_VIEW_NAME);
-			ViewBasedObjectGraph vbog = generateVbogs().get(ARTICLE_VIEW_NAME);
-
-			ViewInstance vi = new ViewInstance(vd);
-
-			List<ArticleCitation> l = new ArrayList<ArticleCitation>();
-
-			Iterator<ViewInstance> it = getCe().executeFullQuery(vi, true,
-					offset, pageSize).iterator();
-			while (it.hasNext()) {
-				ViewInstance lvi = it.next();
-
-				vbog.viewToObjectGraph(lvi);
-				Object o = vbog.readPrimaryObject();
-				ArticleCitation a = (ArticleCitation) o;
-
-				l.add(a);
-
-			}
-
-			return l;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-
-		} finally {
-			getCe().closeDbConnection();
-		}
-	}
-
-	// TODO refactor to use generic method from CoreDao
-	@Deprecated
-	public List<ArticleCitation> retrieveCorpusArticlesPaged(String corpusName,
-			int offset, int pageSize) throws Exception {
-		
-		try {
-
-			getCe().connectToDB();
-			getCe().turnOffAutoCommit();
-
-			ViewDefinition vd = getTop().getViews().get(ARTICLE_VIEW_NAME);
-			ViewBasedObjectGraph vbog = generateVbogs().get(ARTICLE_VIEW_NAME);
-
-			ViewInstance vi = new ViewInstance(vd);
-
-			AttributeInstance ai = vi.readAttributeInstance(
-					"]Corpus|Corpus.name", 0);
-			ai.writeValueString(corpusName);
-
-			List<ArticleCitation> l = new ArrayList<ArticleCitation>();
-
-			Iterator<ViewInstance> it = getCe().executeFullQuery(vi, true,
-					offset, pageSize).iterator();
-			while (it.hasNext()) {
-				ViewInstance lvi = it.next();
-
-				vbog.viewToObjectGraph(lvi);
-				Object o = vbog.readPrimaryObject();
-				ArticleCitation a = (ArticleCitation) o;
-
-				l.add(a);
-
-			}
-
-			return l;
-
-		} finally {
-
-			getCe().closeDbConnection();
-		
-		}
-		
-	}
-
-	// TODO refactor to use generic method from CoreDao
-	@Deprecated
-	public List<Journal> retrieveAllJournalsPaged(int offset, int pageSize)
-			throws Exception {
-		try {
-
-			getCe().connectToDB();
-			getCe().turnOffAutoCommit();
-
-			ViewDefinition vd = getTop().getViews().get(JOURNAL_VIEW_NAME);
-			ViewBasedObjectGraph vbog = generateVbogs().get(JOURNAL_VIEW_NAME);
-
-			ViewInstance vi = new ViewInstance(vd);
-
-			List<Journal> l = new ArrayList<Journal>();
-			Iterator<ViewInstance> it = getCe().executeFullQuery(vi, true,
-					offset, pageSize).iterator();
-			while (it.hasNext()) {
-				ViewInstance lvi = it.next();
-
-				vbog.viewToObjectGraph(lvi);
-				Journal j = (Journal) vbog.readPrimaryObject();
-
-				l.add(j);
-
-			}
-
-			return l;
-
-		} finally {
-			getCe().closeDbConnection();
-		}
-	}
-
 	// ~~~~~~~~~~~~~~
 	// List functions
 	// ~~~~~~~~~~~~~~
@@ -1036,6 +599,11 @@ return false;
 		doc.packForSerialization();
 		ftd.setLapdf(Converters.objectToByteArray(doc));
 		doc.unpackFromSerialization();
+		
+		LapdftextXMLDocument xml = doc.convertToLapdftextXmlFormat();
+		StringWriter writer = new StringWriter();
+		XmlBindingTools.generateXML(xml, writer);
+		ftd.setXml( writer.toString() );
 
 		ftd.setCitation(ac);
 		ac.setFullText(ftd);
@@ -1234,12 +802,12 @@ return false;
 
 	}
 
-	public void addCorpusToArticle(long articleBmkegId, long corpusBmkegId)
+	public void addCorpusToArticle(long articleVpdmfId, long corpusVpdmfId)
 			throws Exception {
 
-		ArticleCitation a = findArticleByVpdmfId(articleBmkegId);
+		ArticleCitation a = this.coreDao.findById(articleVpdmfId, new ArticleCitation(), "ArticleCitation");
 		if (a == null) {
-			throw new Exception("No article with id: " + articleBmkegId
+			throw new Exception("No article with id: " + articleVpdmfId
 					+ " was found for updating.");
 		}
 
@@ -1249,20 +817,32 @@ return false;
 			a.setCorpora(corpora);
 		}
 
-		if (doesCorporaContainsCorpus(corpora, corpusBmkegId)) {
+		if (doesCorporaContainsCorpus(corpora, corpusVpdmfId)) {
 			// Corpus already contained in article's corpora.
 			return;
 		}
 
-		Corpus c = findCorpusById(corpusBmkegId);
+		Corpus c = this.coreDao.findById(corpusVpdmfId, new Corpus(), "Corpus");
 		if (c == null) {
-			throw new Exception("No corpus with id: " + corpusBmkegId
+			throw new Exception("No corpus with id: " + corpusVpdmfId
 					+ " was found to add to the article's corpora");
 		}
 
 		corpora.add(c);
 
-		updateArticleCitation(a);
+		this.coreDao.update(a, "ArticleCitation");
+	
+	}
+	
+	private boolean doesCorporaContainsCorpus(List<Corpus> corpora,
+			long corpusBmkegId) {
+
+		for (Corpus c : corpora) {
+			if (c.getVpdmfId() == corpusBmkegId)
+				return true;
+		}
+		return false;
+	
 	}
 
 	public void addCorpusToArticles(long corpusBmkegId, long[] articlesBmkegIds)
@@ -1272,16 +852,125 @@ return false;
 		}
 	}
 
-	private boolean doesCorporaContainsCorpus(List<Corpus> corpora,
-			long corpusBmkegId) {
+	@Override
+	public boolean removeFragmentBlock(FTDFragmentBlock frgBlk) throws Exception {
 
-		for (Corpus c : corpora) {
-			if (c.getVpdmfId() == corpusBmkegId)
-				return true;
+		int count = 0;
+		long t = System.currentTimeMillis();
+				
+		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+		
+		VPDMf top = ce.readTop();
+
+		try {
+
+			ce.connectToDB();
+			ce.turnOffAutoCommit();
+	
+			ViewDefinition vd = top.getViews().get("FTDFragment");
+			ViewInstance qvi = new ViewInstance(vd);
+
+			AttributeInstance ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.x1", 0);
+			ai.setValue(frgBlk.getX1());
+			
+			ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.y1", 0);
+			ai.setValue(frgBlk.getY1());
+			
+			ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.x2", 0);
+			ai.setValue(frgBlk.getX2());
+			
+			ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.y2", 0);
+			ai.setValue(frgBlk.getY2());
+			
+			ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.x3", 0);
+			ai.setValue(frgBlk.getX3());
+			
+			ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.y3", 0);
+			ai.setValue(frgBlk.getY3());
+			
+			ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.x4", 0);
+			ai.setValue(frgBlk.getX4());
+			
+			ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.y4", 0);
+			ai.setValue(frgBlk.getY4());
+			
+			ai = qvi.readAttributeInstance(
+					"]FTDFragmentBlock|FTDFragmentBlock.p", 0);
+			ai.setValue(frgBlk.getP());
+			
+			List<LightViewInstance> lLvi = ce.executeListQuery(qvi);
+			
+			if( lLvi.size() > 1 || lLvi.size() == 0 ) {
+				return false;
+			} 
+		
+			String sql = "DELETE frgBlk.* " +
+					 "FROM FTDFragmentBlock AS frgBlk " +
+					 "WHERE" +
+					 " frgBlk.x1 = " + frgBlk.getX1() + " AND " +
+					 " frgBlk.y1 = " + frgBlk.getY1() + " AND " +	
+					 " frgBlk.x2 = " + frgBlk.getX2() + " AND " +	
+					 " frgBlk.y2 = " + frgBlk.getY2() + " AND " +	
+					 " frgBlk.x3 = " + frgBlk.getX3() + " AND " +	
+					 " frgBlk.y3 = " + frgBlk.getY3() + " AND " +	
+					 " frgBlk.x4 = " + frgBlk.getX4() + " AND " +	
+					 " frgBlk.y4 = " + frgBlk.getY4() + " AND " +	
+					 " frgBlk.p = " + frgBlk.getP() + ";";	
+			
+			int out = ce.executeRawUpdateQuery(sql);
+			
+			LightViewInstance lvi = lLvi.get(0);
+			String[] idxTup = lvi.getIndexTuple().split("<|>");
+			String[] idxTupFields = lvi.getIndexTupleFields().split("<|>");
+			int countBlocks = -1;
+			for(int i=0; i<idxTupFields.length; i++) {
+				if( idxTupFields[i].equals( "FTDFragment_4" ) ){
+					String[] xvalues = idxTup[i].split(",");
+					countBlocks = xvalues.length;
+					break;
+				}
+			}
+			
+			if( countBlocks == 1 ) {
+
+				sql = "DELETE frg.* " +
+						 "FROM FTDFragment AS frg " + 
+						 "WHERE frg.vpdmfId = " + lvi.getVpdmfId() + ";";
+
+				int out2 = ce.executeRawUpdateQuery(sql);
+
+				sql = "DELETE vt.* " +
+						 "FROM ViewTable AS vt " +
+						 "WHERE vt.vpdmfId = " + lvi.getVpdmfId() + ";";
+
+				int out3 = ce.executeRawUpdateQuery(sql);
+
+			}
+			
+			ce.commitTransaction();
+		
+		} catch (Exception e) {
+		
+			e.printStackTrace();
+			ce.rollbackTransaction();
+			
+		} finally {
+			
+			ce.dbConnection.close();
+			
 		}
-		return false;
+		
+		return true;
+		
+	
 	}
-
-
-
+	
 }

@@ -11,6 +11,7 @@ import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.digitalLibrary.model.citations.LiteratureCitation;
 import edu.isi.bmkeg.ftd.model.FTD;
+import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
 
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
@@ -23,46 +24,12 @@ import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
  * like the ArticleServiceImpl bean.
  *
  */
-public interface CitationsDao {
-
+public interface ExtendedDigitalLibraryDao {
 	
 	public void setCoreDao(CoreDao coreDao);
 
 	public CoreDao getCoreDao();
 
-	
-	// ~~~~~~~~~~~~~~~
-	// Count functions
-	// ~~~~~~~~~~~~~~~
-
-	public int countCitations() throws Exception;
-	
-	public int countArticles() throws Exception;
-
-	public int countCorpusArticles(String corpusName) throws Exception;
-
-	// ~~~~~~~~~~~~~~~~~~~
-	// Insert Functions
-	// ~~~~~~~~~~~~~~~~~~~
-	
-	public void insertArticleCitation(ArticleCitation article) throws Exception;
-	
-	public void insertJournal(Journal journal) throws Exception;
-	
-	public void insertCorpus(Corpus corpus) throws Exception;
-
-	void insertArticleCorpus(Corpus corpus) throws Exception;
-
-	// ~~~~~~~~~~~~~~~~~~~
-	// Update Functions
-	// ~~~~~~~~~~~~~~~~~~~
-	
-	public void updateArticleCitation(ArticleCitation article) throws Exception;
-
-	public void updateJournal(Journal j1) throws Exception ;
-
-	public void updateCorpus(Corpus corpus) throws Exception;
-	
 	// ~~~~~~~~~~~~~~~~~~~
 	// Delete Functions
 	// ~~~~~~~~~~~~~~~~~~~
@@ -75,18 +42,12 @@ public interface CitationsDao {
 	// Find by id Functions
 	// ~~~~~~~~~~~~~~~~~~~~
 	
-	public ArticleCitation findArticleByVpdmfId(long id) throws Exception;
-	
 	public ArticleCitation findArticleByPmid(int pmid) throws Exception;
 	
 	public ArticleCitation findArticleById(String idCode, Integer id) throws Exception;
 
-	public Journal findJournalById(long j1Id) throws Exception ;
-
 	public Journal findJournalByAbbr(String abbr) throws Exception;
-	
-	public Corpus findCorpusById(long id) throws Exception;
-	
+		
 	public Corpus findCorpusByName(String name) throws Exception;
 	
 	public Map<Integer, Long> lookupPmids(Set<Integer> keySet) throws Exception;
@@ -94,29 +55,7 @@ public interface CitationsDao {
 	public FTD findArticleDocumentByPmid(Integer pmid) throws Exception;
 	
 	public FTD findArticleDocumentById(String idCode, Integer id) throws Exception;
-	
-	// ~~~~~~~~~~~~~~~~~~~~
-	// check Functions
-	// ~~~~~~~~~~~~~~~~~~~~
-	public boolean checkArticleByPmid(int pmid) throws Exception;
-	
-	// ~~~~~~~~~~~~~~~~~~~~
-	// Retrieve functions
-	// ~~~~~~~~~~~~~~~~~~~~
-
-	//	It should look for all Publications, not just the Articles subset.
-	@Deprecated
-	public List<ArticleCitation> retrieveAllArticles() throws Exception;
-	
-	@Deprecated
-	public List<ArticleCitation> retrieveAllArticlesPaged(int offset, int cnt) throws Exception;
-
-	@Deprecated
-	public List<ArticleCitation> retrieveCorpusArticlesPaged(String corpusName, int offset, int pageSize) throws Exception;
-
-	@Deprecated
-	public List<Journal> retrieveAllJournalsPaged(int offset, int cnt) throws Exception;
-
+		
 	// ~~~~~~~~~~~~~~
 	// List functions
 	// ~~~~~~~~~~~~~~
@@ -156,4 +95,6 @@ public interface CitationsDao {
 
 	public void removeCorpusFromCitation(Corpus c, LiteratureCitation a);
 	
+	public boolean removeFragmentBlock(FTDFragmentBlock frgBlk) throws Exception;
+
 }

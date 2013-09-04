@@ -12,8 +12,6 @@ import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
 
 public class AddPmidEncodedPdfsToCorpus {
 
-//	public static String USAGE = "arguments: <pdf-dir-or-file> <corpus-name> <dbName> <login> <password> [<rule-file>]"; 
-
 	private static Logger logger = Logger.getLogger(AddPmidEncodedPdfsToCorpus.class);
 
 	public static class Options {
@@ -70,12 +68,14 @@ public class AddPmidEncodedPdfsToCorpus {
 			de.loadArticlesFromPmidListToCorpus(mapPmidsToVpdmfids.keySet(), options.corpusName);		
 
 		} catch (CmdLineException e) {
+
 			System.err.println(e.getMessage());
 			System.err.print("Arguments: ");
 			parser.printSingleLineUsage(System.err);
 			System.err.println("\n\n Options: \n");
 			parser.printUsage(System.err);
 			System.exit(-1);
+		
 		}
 
 	}

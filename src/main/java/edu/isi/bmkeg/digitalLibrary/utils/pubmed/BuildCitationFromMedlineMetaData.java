@@ -16,7 +16,9 @@ public class BuildCitationFromMedlineMetaData {
 		
 		meus.exec("term=(" + author + "[au]+AND+" + year + "[dp]+AND+" + volume + "[vi]+AND+" + page + "[pg])");
 		
-		int pmid = esh.getIds().get(0);
+		int pmid = -1;
+		if( esh.getIds().size() == 1 )
+			pmid = esh.getIds().get(0);
 		
 		return pmid;
 
