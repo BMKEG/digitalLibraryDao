@@ -7,16 +7,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.prefs.Preferences;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +24,11 @@ import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.digitalLibrary.model.citations.LiteratureCitation;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ArticleCitation_qo;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
+import edu.isi.bmkeg.ftd.model.qo.FTDFragment_qo;
+import edu.isi.bmkeg.ftd.model.qo.FTD_qo;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
 import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
 import edu.isi.bmkeg.uml.model.UMLclass;
@@ -662,6 +662,186 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		
 	}
 
+	@Override
+	/**
+	 * Low level optimized SQL command to add articles to a given corpus.
+	 */
+	public int addArticlesToCorpusWithIds(List<Long> articleIds, long corpusId)
+			throws Exception {
+		
+		int count = 0;
+		
+		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+		VPDMf top = ce.readTop();
+		ViewDefinition vd = top.getViews().get("ArticleCorpus");
+
+		ViewInstance vi = new ViewInstance(vd);
+
+		PrimitiveLink pl = (PrimitiveLink) vd.getSubGraph().getEdges()
+				.iterator().next();
+		UMLclass link = pl.getRole().getAss().getLinkClass();
+
+		// We are going to write the data that we want to insert into the
+		// database into
+		// a local file and then insert that as a batch function.
+		// - need to lock tables as we do this.
+		ce.connectToDB();
+		ce.turnOffAutoCommit();
+
+		try {
+
+			Collections.sort(articleIds);
+			Iterator<Long> articleIt = articleIds.iterator();
+			while (articleIt.hasNext()) {
+				Long articleId = articleIt.next();
+				
+				ClassInstance linkCi = new ClassInstance(link);
+
+				AttributeInstance corpusIdAi = linkCi.getAttributes().get(
+						"corpora_id");
+				corpusIdAi.setValue(corpusId);
+
+				AttributeInstance articleIdAi = linkCi.getAttributes().get(
+						"resources_id");
+				articleIdAi.setValue(articleId);
+				
+				List<ClassInstance> l = ce.queryClass(linkCi);
+				if( l.size() == 0 ) {
+					ce.insertObjectIntoDB(linkCi);
+					count++;
+				} 
+
+			}
+
+			ce.commitTransaction();
+
+		} catch (Exception e) {
+			
+			throw e;
+
+		} finally {
+
+			this.coreDao.getCe().closeDbConnection();
+
+		}
+		
+		return count;
+		
+	}
+	
+	public int removeArticlesFromCorpusWithIds(List<Long> articleIds, long corpusId) 
+			throws Exception {
+				
+		int count = 0;
+				
+		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+		VPDMf top = ce.readTop();
+
+		ce.connectToDB();
+		ce.turnOffAutoCommit();
+
+		try {
+
+			for(Long l : articleIds) {
+						//
+				// REMOVE EXISTING DATA FROM THE SET BACKING TABLE FOR THE 
+				// SET BACKING TABLE DIRECTLY USING SQL
+				//
+				String sql = "DELETE c.* " +
+							 "FROM Corpus_corpora__resources_LiteratureCitation AS c " +
+							 "WHERE c.corpora_id = " + corpusId +
+							 "  AND c.resources_id = " + l + ";";
+				
+				count += this.getCoreDao().getCe().executeRawUpdateQuery(sql);
+				
+				this.coreDao.getCe().prettyPrintSQL(sql);
+			
+			}
+
+			ce.commitTransaction();
+
+		} catch (Exception e) {
+					
+			throw e;
+
+		} finally {
+
+			this.coreDao.getCe().closeDbConnection();
+
+		}
+				
+		return count;
+				
+	}
+	
+	public boolean fullyDeleteArticle(Long articleId) throws Exception {
+				
+		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+
+		ce.connectToDB();
+		ce.turnOffAutoCommit();
+
+		try {
+			
+			//
+			// preparation: find the ArticleDocument view for this citation. 
+			//
+			ArticleCitation_qo acQo = new ArticleCitation_qo();
+			acQo.setVpdmfId(articleId + "");
+			FTD_qo ftdQo = new FTD_qo();
+			ftdQo.setCitation(acQo);
+			List<LightViewInstance> lviList = this.coreDao.listInTrans(
+					ftdQo, "ArticleDocument"
+					);
+						
+			if( lviList.size() > 1 ) {
+				throw new Exception("Too many documents returned from id:" + articleId);
+			}
+
+			// 3. remove the citation
+			this.coreDao.deleteByIdInTrans(articleId, "ArticleCitation");					
+			
+			//
+			// If there is an FTD available then we delete stufff...
+			//
+			if( lviList.size() == 1 ) {
+
+				LightViewInstance ftd = lviList.get(0);
+				
+				FTDFragment_qo frgQo = new FTDFragment_qo();
+				ftdQo = new FTD_qo();
+				ftdQo.setVpdmfId(ftd.getVpdmfId() + "");
+				frgQo.setFtd(ftdQo);
+				
+				Iterator<LightViewInstance> frgIt = this.coreDao.listInTrans(
+						frgQo, "FTDFragment"
+						).iterator();
+				while( frgIt.hasNext() ) {
+					LightViewInstance frg = frgIt.next();
+					this.coreDao.deleteByIdInTrans(frg.getVpdmfId(), "FTDFragment");					
+				}				
+				
+				// 2. remove the FTD
+				this.coreDao.deleteByIdInTrans(ftd.getVpdmfId(), "FTD");					
+				
+			} 
+			
+			ce.commitTransaction();
+
+		} catch (Exception e) {
+					
+			ce.rollbackTransaction();
+			return false;			
+
+		} finally {
+
+			this.coreDao.getCe().closeDbConnection();
+
+		}
+				
+		return true;
+				
+	}
 
 	public void addArticlesToCorpus(Set<Integer> keySet, String corpusName)
 			throws Exception {

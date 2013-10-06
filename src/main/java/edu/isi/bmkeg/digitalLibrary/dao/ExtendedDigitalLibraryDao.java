@@ -37,6 +37,9 @@ public interface ExtendedDigitalLibraryDao {
 	public void deleteArticleCitation(long id) throws Exception;
 
 	public void deleteCorpus(Corpus corpus) throws Exception;
+
+	boolean fullyDeleteArticle(Long articleId) throws Exception;
+
 	
 	// ~~~~~~~~~~~~~~~~~~~~
 	// Find by id Functions
@@ -81,6 +84,10 @@ public interface ExtendedDigitalLibraryDao {
 	public void addCorpusToArticle(long articleBmkegId, long corpusBmkegIdId) throws Exception;
 	
 	public void addCorpusToArticles(long corpusBmkegId, long[] articlesBmkegIds) throws Exception;
+	
+	public int addArticlesToCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
+
+	public int removeArticlesFromCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
 	
 	public void addArticlesToCorpus(Set<Integer> keySet, String corpusName) throws Exception;
 	

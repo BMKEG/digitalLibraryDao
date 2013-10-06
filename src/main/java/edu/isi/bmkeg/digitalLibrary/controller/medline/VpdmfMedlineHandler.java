@@ -111,8 +111,8 @@ public class VpdmfMedlineHandler implements MedlineHandler {
 				.authors()) {
 			Author p = new Author();
 			if (author.name() != null) {
-				p.setFullName(author.name().initials() + " "
-						+ author.name().lastName());
+				p.setInitials(author.name().initials());
+				p.setSurname(author.name().lastName());
 				authors.add(p);
 				p.getPublishedWork().add(article);
 			}

@@ -95,22 +95,22 @@ class EfetchHandler extends DefaultHandler {
 			// Parse the pubmed information
 			//
 			if (currentMatch.endsWith(".LastName")) {
-				if( person.getFullName() != null )
-					person.setFullName(person.getFullName() + " " + value);
+				if( person.getSurname() != null )
+					person.setSurname(person.getSurname() + " " + value);
 				else 
-					person.setFullName(value);
+					person.setSurname(value);
 			} 
 			else if (currentMatch.endsWith(".Initials")) {
-				if( person.getFullName() != null )
-					person.setFullName(value + " " + person.getFullName() );
+				if( person.getInitials() != null )
+					person.setInitials(value + " " + person.getInitials() );
 				else 
-					person.setFullName(value);
+					person.setInitials(value);
 			}
 			else if (currentMatch.endsWith(".CollectiveName")) {
-				if( person.getFullName() != null )
-					person.setFullName(value + " " + person.getFullName() );
+				if( person.getSurname() != null )
+					person.setSurname(value + " " + person.getSurname() );
 				else 
-					person.setFullName(value);
+					person.setSurname(value);
 			}	
 			//
 			// Title information
