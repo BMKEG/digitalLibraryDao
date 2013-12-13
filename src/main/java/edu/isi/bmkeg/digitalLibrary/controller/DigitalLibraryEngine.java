@@ -51,9 +51,9 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	private ExtendedDigitalLibraryDao citDao;
-	private FtdDao ftdDao;
 	private DigitalLibraryDao digLibDao;
+	private ExtendedDigitalLibraryDao extDigLibDao;
+	private FtdDao ftdDao;
 	
 	private Map<String, Journal> jLookup;
 	private Map<String, File> fLookup;
@@ -83,7 +83,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		CoreDao coreDao = this.getFtdDao().getCoreDao();
 		this.setFtdDao(new LAPDFTextDaoImpl(coreDao));
 		this.digLibDao = new DigitalLibraryDaoImpl(coreDao);
-		this.citDao = new ExtendedDigitalLibraryDaoImpl(coreDao);
+		this.extDigLibDao = new ExtendedDigitalLibraryDaoImpl(coreDao);
 
 		// Build lookup table from journals on disk (persistent object)
 		JournalLookupPersistentObject jLookupPObj = new JournalLookupPersistentObject();
@@ -93,12 +93,12 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	public ExtendedDigitalLibraryDao getCitDao() {
-		return citDao;
+	public ExtendedDigitalLibraryDao getExtDigLibDao() {
+		return extDigLibDao;
 	}
 
 	public void setCitDao(ExtendedDigitalLibraryDao citDao) {
-		this.citDao = citDao;
+		this.extDigLibDao = citDao;
 	}
 
 	public Map<String, Journal> getjLookup() {
@@ -279,11 +279,11 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			acQ.setPmid(id.toString());
 			ftdQ.setCitation(acQ);
 			
-			List<LightViewInstance> ftdL = this.citDao.getCoreDao().list(ftdQ, "ArticleDocument");
+			List<LightViewInstance> ftdL = this.extDigLibDao.getCoreDao().list(ftdQ, "ArticleDocument");
 			if( ftdL.size() == 1 ) 
 				ftdLvi = ftdL.get(0);
 			
-			List<LightViewInstance> acL = this.citDao.getCoreDao().list(acQ, "ArticleCitation");
+			List<LightViewInstance> acL = this.extDigLibDao.getCoreDao().list(acQ, "ArticleCitation");
 			if( acL.size() == 1 ) 
 				acLvi = acL.get(0);
 			
@@ -298,11 +298,11 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			idQ.setIdType(idCode);
 			idQ.setIdValue(id.toString());
 
-			List<LightViewInstance> ftdL = this.citDao.getCoreDao().list(ftdQ, "ArticleDocument");			
+			List<LightViewInstance> ftdL = this.extDigLibDao.getCoreDao().list(ftdQ, "ArticleDocument");			
 			if( ftdL.size() == 1 ) 
 				ftdLvi = ftdL.get(0);
 
-			List<LightViewInstance> acL = this.citDao.getCoreDao().list(acQ, "ArticleCitation");
+			List<LightViewInstance> acL = this.extDigLibDao.getCoreDao().list(acQ, "ArticleCitation");
 			if( acL.size() == 1 ) 
 				acLvi = acL.get(0);
 
@@ -311,7 +311,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		ArticleCitation ac = null;
 		if( idCode.equals( "pmid" ) ) {
 			
-			ac = this.citDao.findArticleByPmid(id);			
+			ac = this.extDigLibDao.findArticleByPmid(id);			
 			if (ac == null) {
 				Set<Integer> ii = new HashSet<Integer>();
 				ii.add(id);
@@ -323,7 +323,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			}		
 			
 		} else {
-			ac = this.citDao.findArticleById(idCode, id);
+			ac = this.extDigLibDao.findArticleById(idCode, id);
 		}
 		
 		if (ac == null) {
@@ -340,7 +340,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		this.classifyDocumentWithBaselineRules(doc);
 		String text = this.readBasicText(doc);
 
-		this.citDao.addPdfToArticleCitation(doc, ac, pdf, text);
+		this.extDigLibDao.addPdfToArticleCitation(doc, ac, pdf, text);
 
 		long deltaT = System.currentTimeMillis() - t;
 		logger.info("Aded PDF to article (" + idCode + ":" + id + ") in " + deltaT
@@ -352,7 +352,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 	
 	public void insertArticleCorpus(Corpus c) throws Exception {
 		
-		this.citDao.getCoreDao().insert(c, "ArticleCorpus");
+		this.extDigLibDao.getCoreDao().insert(c, "ArticleCorpus");
 		
 	}
 	
@@ -405,11 +405,11 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		ArticleCitation ac = null;
 		FTD ftd = null;
 		if( idCode.equals( "pmid" ) ) {
-			ac = this.citDao.findArticleByPmid(id);			
-			ftd = this.citDao.findArticleDocumentByPmid(id);
+			ac = this.extDigLibDao.findArticleByPmid(id);			
+			ftd = this.extDigLibDao.findArticleDocumentByPmid(id);
 		} else {
-			ac = this.citDao.findArticleById(idCode, id);
-			ftd = this.citDao.findArticleDocumentById(idCode, id);
+			ac = this.extDigLibDao.findArticleById(idCode, id);
+			ftd = this.extDigLibDao.findArticleDocumentById(idCode, id);
 		}
 		
 		if (ac == null) {
@@ -423,11 +423,11 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			this.classifyDocumentWithBaselineRules(doc);
 			String text = this.readBasicText(doc);
 
-			this.citDao.addPdfToArticleCitation(doc, ac, pdf, text);
+			this.extDigLibDao.addPdfToArticleCitation(doc, ac, pdf, text);
 		
 		} else if( ftd.getLaswf() == null ){
 		
-			this.citDao.addSwfToFtd(pdf, ftd);
+			this.extDigLibDao.addSwfToFtd(pdf, ftd);
 			this.getFtdDao().getCoreDao().update(ftd, "FTD");
 			
 		} else {
@@ -452,12 +452,12 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 	public Map<Integer, Long> buildPmidLookupFromDb() throws Exception {
 
-		int articleCount = getCitDao().getCoreDao().countView("ArticleCitation");
+		int articleCount = getExtDigLibDao().getCoreDao().countView("ArticleCitation");
 
 		Map<Integer, Long> pmidsInDb = new HashMap<Integer, Long>();
 		int i = 0;
 		do {
-			pmidsInDb.putAll(getCitDao().listAllPmidsPaged(i, 10000));
+			pmidsInDb.putAll(getExtDigLibDao().listAllPmidsPaged(i, 10000));
 			i = i + 10000;
 		} while (i < articleCount);
 
@@ -468,7 +468,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 	public Map<Integer, Long> buildPmidLookup(Set<Integer> pmids)
 			throws Exception {
 
-		return (getCitDao().lookupPmids(pmids));
+		return (getExtDigLibDao().lookupPmids(pmids));
 
 	}
 
@@ -502,7 +502,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		List<ArticleCitation> l = new ArrayList<ArticleCitation>();
 		
 		// run checks 
-		Map<Integer, Long> pmidsInDb = this.getCitDao().lookupPmids(pmidsToAdd);
+		Map<Integer, Long> pmidsInDb = this.getExtDigLibDao().lookupPmids(pmidsToAdd);
 		Set<Integer> toAdd = new HashSet<Integer>(pmidsToAdd);
 		toAdd.removeAll(pmidsInDb.keySet());
 		
@@ -539,7 +539,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 				long t = System.currentTimeMillis();
 
-				getCitDao().getCoreDao().insert(a, "ArticleCitation");
+				getExtDigLibDao().getCoreDao().insert(a, "ArticleCitation");
 
 				long deltaT = System.currentTimeMillis() - t;
 				logger.info("inserted article, PMID=" + a.getPmid() + ", "
@@ -597,7 +597,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 			try {
 				logger.info("inserting article, PMID=" + a.getPmid());
-				getCitDao().getCoreDao().insert(a, "ArticleCitation");
+				getExtDigLibDao().getCoreDao().insert(a, "ArticleCitation");
 			} catch (Exception e) {
 				logger.info("article insert failed, PMID=" + a.getPmid());
 				e.printStackTrace();
@@ -614,14 +614,14 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		Map<Integer, Map<String, String>> idMap = this
 				.loadIdMapFromPmidFile(pmidFile);
 
-		this.getCitDao().addArticlesToCorpus(idMap.keySet(), corpusName);
+		this.getExtDigLibDao().addArticlesToCorpus(idMap.keySet(), corpusName);
 
 	}
 
 	public void loadArticlesFromPmidListToCorpus(Set<Integer> pmids,
 			String corpusName) throws Exception {
 
-		this.getCitDao().addArticlesToCorpus(pmids, corpusName);
+		this.getExtDigLibDao().addArticlesToCorpus(pmids, corpusName);
 
 	}
 	
@@ -636,12 +636,12 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		while (idIt.hasNext()) {
 			Integer id = idIt.next();
 
-			ArticleCitation c = this.citDao.findArticleByPmid(id);
+			ArticleCitation c = this.extDigLibDao.findArticleByPmid(id);
 
 			if (c != null) {
 				try {
 					long bmkegId = c.getVpdmfId();
-					this.citDao.deleteArticleCitation(bmkegId);
+					this.extDigLibDao.deleteArticleCitation(bmkegId);
 				} catch (Exception e) {
 					logger.info("Can't delete article " + c.getVpdmfLabel());
 				}
@@ -657,7 +657,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		Map<Integer, Map<String, String>> idMap = this
 				.loadIdMapFromPmidFile(pmidFile);
 
-		Corpus c = this.citDao.findCorpusByName(corpusName);
+		Corpus c = this.extDigLibDao.findCorpusByName(corpusName);
 		
 		List<Integer> ids = new ArrayList<Integer>(idMap.keySet());
 		Collections.sort(ids);
@@ -665,7 +665,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 		while (idIt.hasNext()) {
 			Integer id = idIt.next();
 
-			ArticleCitation a = this.citDao.findArticleByPmid(id);
+			ArticleCitation a = this.extDigLibDao.findArticleByPmid(id);
 
 			Iterator<Corpus> ccIt = a.getCorpora().iterator();
 			Corpus cc = null;
@@ -679,7 +679,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			
 			a.getCorpora().remove(cc);
 			
-			getCitDao().getCoreDao().update(a, "ArticleCitation");
+			getExtDigLibDao().getCoreDao().update(a, "ArticleCitation");
 			
 		}
 		
@@ -687,9 +687,9 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 	public void deleteCorpus(String corpusName) throws Exception {
 
-		Corpus c = this.citDao.findCorpusByName(corpusName);
+		Corpus c = this.extDigLibDao.findCorpusByName(corpusName);
 		
-		this.citDao.deleteCorpus(c);
+		this.extDigLibDao.deleteCorpus(c);
 		
 	}
 
@@ -726,7 +726,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 				
 				List<ArticleCitation> aList = cmh.parseMedlineFileToList(f);
 				for( ArticleCitation a: aList) {
-					getCitDao().getCoreDao().insert(a, "ArticleCitation");
+					getExtDigLibDao().getCoreDao().insert(a, "ArticleCitation");
 				}
 							
 				this.getfLookup().put(f.getName(), f);
