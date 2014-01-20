@@ -43,58 +43,74 @@ public class BuildCorpusFromMedlineQuery {
 		DigitalLibraryEngine dlEng = new DigitalLibraryEngine ();
 		dlEng.initializeVpdmfDao(login, password, dbName);
 		
-		ESearcher eSearcher = new ESearcher(queryString);
-		int maxCount = eSearcher.getMaxCount();
-		Set<Integer> esearchIds = new HashSet<Integer>();
-		for(int i=0; i<maxCount; i=i+1000) {
-
+		try {
+			
+			dlEng.getDigLibDao().getCoreDao().connectToDb();
+			
+			ESearcher eSearcher = new ESearcher(queryString);
+			int maxCount = eSearcher.getMaxCount();
+			Set<Integer> esearchIds = new HashSet<Integer>();
+			for(int i=0; i<maxCount; i=i+1000) {
+	
+				long t = System.currentTimeMillis();
+				
+				esearchIds.addAll( eSearcher.executeESearch(i, 1000) );
+				
+				long deltaT = System.currentTimeMillis() - t;
+				logger.info("esearch 1000 entries: " + deltaT / 1000.0
+						+ " s\n");
+				
+				logger.info("wait 3 secs");
+				Thread.sleep(3000);
+			}
+	
+			Corpus c = new Corpus();
+			
+			c.setName(corpusName);
+			c.setDescription(queryString);
+			Date d = new Date();
+			c.setDate(d.toString());
+			
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			// insert the corpus
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			long t = System.currentTimeMillis();
-			
-			esearchIds.addAll( eSearcher.executeESearch(i, 1000) );
-			
+			dlEng.getDigLibDao().getCoreDao().insertInTrans(c, "ArticleCorpus");
 			long deltaT = System.currentTimeMillis() - t;
-			logger.info("esearch 1000 entries: " + deltaT / 1000.0
-					+ " s\n");
+			logger.info("inserting corpus '"+corpusName+"': "+deltaT/1000.0+" s\n");
 			
-			logger.info("wait 3 secs");
-			Thread.sleep(3000);
-		}
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			// insert the articles
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			t = System.currentTimeMillis();
+			dlEng.insertArticlesFromPmidList_inTrans(esearchIds);
+			deltaT = System.currentTimeMillis() - t;
+			logger.info("inserting corpus '"+corpusName+"': "+deltaT/1000.0+" s\n");
+			
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			// add articles to the corpus... probably should not be transactional, 
+			// make this interruptable and restartable since it's likely to be quite 
+			// slow. OK. How to develop a batch-upload function for collections?
+			//
+			// Need to make this a batch load function. 
+			//
+			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			t = System.currentTimeMillis();
+			dlEng.loadArticlesFromPmidListToCorpus(esearchIds, corpusName);
+			deltaT = System.currentTimeMillis() - t;
+			logger.info("linking corpus and articles: "+deltaT/1000.0+" s\n");
 
-		Corpus c = new Corpus();
+			dlEng.getDigLibDao().getCoreDao().commitTransaction();
+
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+			dlEng.getDigLibDao().getCoreDao().rollbackTransaction();
+
+		}
 		
-		c.setName(corpusName);
-		c.setDescription(queryString);
-		Date d = new Date();
-		c.setDate(d.toString());
-		
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// insert the corpus
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		long t = System.currentTimeMillis();
-		dlEng.insertArticleCorpus(c);
-		long deltaT = System.currentTimeMillis() - t;
-		logger.info("inserting corpus '"+corpusName+"': "+deltaT/1000.0+" s\n");
-		
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// insert the articles
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		t = System.currentTimeMillis();
-		dlEng.insertArticlesFromPmidList(esearchIds);
-		deltaT = System.currentTimeMillis() - t;
-		logger.info("inserting corpus '"+corpusName+"': "+deltaT/1000.0+" s\n");
-		
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		// add articles to the corpus... probably should not be transactional, 
-		// make this interruptable and restartable since it's likely to be quite 
-		// slow. OK. How to develop a batch-upload function for collections?
-		//
-		// Need to make this a batch load function. 
-		//
-		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		t = System.currentTimeMillis();
-		dlEng.loadArticlesFromPmidListToCorpus(esearchIds, corpusName);
-		deltaT = System.currentTimeMillis() - t;
-		logger.info("linking corpus and articles: "+deltaT/1000.0+" s\n");
+		dlEng.getDigLibDao().getCoreDao().closeDbConnection();
+
 		
 	}
 

@@ -1,6 +1,8 @@
 package edu.isi.bmkeg.digitalLibrary.utils.pubmed;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
@@ -143,6 +145,12 @@ class EfetchHandler extends DefaultHandler {
 			// Volume does not change
 			else if (currentMatch.endsWith(".Volume")) {
 				article.setVolume(value);
+				Pattern p = Pattern.compile("(\\d+)");
+				Matcher m = p.matcher(value);
+				if( m.find() ) {
+					Integer v = new Integer(m.group(1));
+					article.setVolValue(v);
+				}
 			}
 			//
 			// Issue does not change

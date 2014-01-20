@@ -1,9 +1,18 @@
 package edu.isi.bmkeg.digitalLibrary.bin;
 
+import java.util.List;
+import java.util.regex.Matcher;
+
 import org.apache.log4j.Logger;
 
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
+import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
+import edu.isi.bmkeg.digitalLibrary.model.citations.JournalEpoch;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Corpus_qo;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.JournalEpoch_qo;
+import edu.isi.bmkeg.ftd.model.FTDRuleSet;
 import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
+import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 
 public class RemoveCorpus {
 
@@ -31,7 +40,30 @@ public class RemoveCorpus {
 		DigitalLibraryEngine de = new DigitalLibraryEngine();
 		de.initializeVpdmfDao(login, password, dbName);
 		
-		de.deleteCorpus(corpusName);
+		Long id = -1L;
+
+		try {
+
+			de.getDigLibDao().getCoreDao().getCe().connectToDB();
+
+			Corpus_qo cQo = new Corpus_qo();
+			cQo.setName(corpusName);
+ 			List<LightViewInstance> l = de.getDigLibDao().listCorpus(cQo);
+ 			
+ 			if( l.size() == 1 ) {
+ 				de.getDigLibDao().deleteCorpusById(l.get(0).getVpdmfId());
+			}
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+			throw e;
+
+		} finally {
+
+			de.getDigLibDao().getCoreDao().getCe().closeDbConnection();
+
+		}
 
 	}
 

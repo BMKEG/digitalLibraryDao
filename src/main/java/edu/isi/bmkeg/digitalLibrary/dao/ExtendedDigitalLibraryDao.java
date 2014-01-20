@@ -9,11 +9,11 @@ import java.util.Set;
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
+import edu.isi.bmkeg.digitalLibrary.model.citations.JournalEpoch;
 import edu.isi.bmkeg.digitalLibrary.model.citations.LiteratureCitation;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
-
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 
@@ -30,78 +30,54 @@ public interface ExtendedDigitalLibraryDao {
 
 	public CoreDao getCoreDao();
 
+	// ~~~~~~~~~~~~~~~~~~~~~
+	// Convenience Functions
+	// ~~~~~~~~~~~~~~~~~~~~~
+
+	public Map<Integer, Long> lookupPmidsInTrans(Set<Integer> keySet) throws Exception;
+
+	public ArticleCitation findArticleByIdInTrans(String idCode, Integer id) throws Exception;
+
+	public ArticleCitation findArticleByPmidInTrans(Integer pmid) throws Exception;
+
+	public Corpus findCorpusByNameInTrans(String name) throws Exception;
+	
+	public FTD findArticleDocumentByPmidInTrans(Integer pmid) throws Exception;
+	
+	public FTD findArticleDocumentByIdInTrans(String idCode, Integer id) throws Exception;
+	
 	// ~~~~~~~~~~~~~~~~~~~
 	// Delete Functions
 	// ~~~~~~~~~~~~~~~~~~~
 	
-	public void deleteArticleCitation(long id) throws Exception;
-
-	public void deleteCorpus(Corpus corpus) throws Exception;
-
-	boolean fullyDeleteArticle(Long articleId) throws Exception;
-
+	boolean fullyDeleteArticle(Long articleId) throws Exception;		
 	
-	// ~~~~~~~~~~~~~~~~~~~~
-	// Find by id Functions
-	// ~~~~~~~~~~~~~~~~~~~~
-	
-	public ArticleCitation findArticleByPmid(int pmid) throws Exception;
-	
-	public ArticleCitation findArticleById(String idCode, Integer id) throws Exception;
-
-	public Journal findJournalByAbbr(String abbr) throws Exception;
-		
-	public Corpus findCorpusByName(String name) throws Exception;
-	
-	public Map<Integer, Long> lookupPmids(Set<Integer> keySet) throws Exception;
-	
-	public FTD findArticleDocumentByPmid(Integer pmid) throws Exception;
-	
-	public FTD findArticleDocumentById(String idCode, Integer id) throws Exception;
-		
-	// ~~~~~~~~~~~~~~
-	// List functions
-	// ~~~~~~~~~~~~~~
-	
-	public List<LightViewInstance> listAllJournalsPaged(int offset, int cnt) throws Exception;
-
-	public List<LightViewInstance> listMatchingJournalsAbbrPaged(String abbrevPattern, int offset, int cnt) throws Exception;
-	
-	public List<LightViewInstance> listAllCorporaPaged(int offset, int pageSize)  throws Exception;
-
-	public List<LightViewInstance> listAllCitationsPaged(int offset, int cnt) throws Exception;
-
-	public List<LightViewInstance> listAllArticlesPaged(int offset, int cnt) throws Exception;
-
-	public List<LightViewInstance> listCorpusArticles(String corpusName) throws Exception;
-	
-	public Map<Integer, Long> listAllPmidsPaged(int offset, int pageSize) throws Exception;
-
 	// ~~~~~~~~~~~~~~~~~~~~
 	// Add x to y functions
 	// ~~~~~~~~~~~~~~~~~~~~
-
 	public void addCorpusToArticle(long articleBmkegId, long corpusBmkegIdId) throws Exception;
 	
 	public void addCorpusToArticles(long corpusBmkegId, long[] articlesBmkegIds) throws Exception;
 	
 	public int addArticlesToCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
-
-	public int removeArticlesFromCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
 	
 	public void addArticlesToCorpus(Set<Integer> keySet, String corpusName) throws Exception;
 	
-	public long addPdfToArticleCitation(LapdfDocument doc, ArticleCitation ac, 
-			File pdf, String text) throws Exception;
+	public long addPdfToArticleCitation(LapdfDocument doc, 
+			ArticleCitation ac, 
+			File pdf,
+			File ruleFile) throws Exception;
 	
 	public void addSwfToFtd(File pdf, FTD ftd) throws Exception, IOException;
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Remove x from y functions
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	public void removeCorpusFromCitation(Corpus c, LiteratureCitation a);
 	
 	public boolean removeFragmentBlock(FTDFragmentBlock frgBlk) throws Exception;
+
+	public int removeArticlesFromCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
+
+
 
 }

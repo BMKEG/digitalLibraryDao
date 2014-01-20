@@ -1,6 +1,7 @@
 package edu.isi.bmkeg.digitalLibrary.bin;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -11,7 +12,9 @@ import org.apache.log4j.Logger;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.lapdf.controller.LapdfVpdmfEngine;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
 import edu.isi.bmkeg.utils.Converters;
+import edu.isi.bmkeg.utils.xml.XmlBindingTools;
 
 public class AddFullTextDocuments
 {
@@ -64,16 +67,15 @@ public class AddFullTextDocuments
 				
 				FTD ftd = new FTD();
 			
-				LapdfDocument doc = lapdfEng.blockifyPdfFile(f);
-				String basicText = lapdfEng.readBasicText(doc);
+				LapdfDocument doc = lapdfEng.blockifyFile(f);
 				
 				ftd.setChecksum( Converters.checksum(f) );
 				ftd.setName( f.getPath() );
-				ftd.setText( basicText );
 			
-				doc.packForSerialization();
-				ftd.setLapdf( Converters.objectToByteArray( doc ) );
-				doc.unpackFromSerialization();
+				LapdftextXMLDocument xml = doc.convertToLapdftextXmlFormat();
+				StringWriter writer = new StringWriter();
+				XmlBindingTools.generateXML(xml, writer);
+				ftd.setXml( writer.toString() );
 				
 				lapdfEng.getFtdDao().getCoreDao().insert(ftd, "FullTextDocument");
 						
@@ -81,18 +83,17 @@ public class AddFullTextDocuments
 			
 		} else {
 		
-			LapdfDocument doc = lapdfEng.blockifyPdfFile(fOrD);
-			String basicText = lapdfEng.readBasicText(doc);
+			LapdfDocument doc = lapdfEng.blockifyFile(fOrD);
 			
 			FTD ftd = new FTD();
 
 			ftd.setChecksum( Converters.checksum(fOrD) );
 			ftd.setName( fOrD.getPath() );
-			ftd.setText( basicText );
 		
-			doc.packForSerialization();
-			ftd.setLapdf( Converters.objectToByteArray( doc ) );
-			doc.unpackFromSerialization();
+			LapdftextXMLDocument xml = doc.convertToLapdftextXmlFormat();
+			StringWriter writer = new StringWriter();
+			XmlBindingTools.generateXML(xml, writer);
+			ftd.setXml( writer.toString() );
 			
 			lapdfEng.getFtdDao().getCoreDao().insert(ftd, "FullTextDocument");
 			

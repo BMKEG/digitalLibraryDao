@@ -24,28 +24,22 @@ public class JournalLookupPersistentObject {
 
 	private static Logger logger = Logger.getLogger(JournalLookupPersistentObject.class);
 
-	private Map<String, Journal> jLookup = new HashMap<String, Journal>();
 	private static String JLOOKUP_FILE = "journalAbbrLookup.jObj";
-	private File jLookupFile;
 	
-	private VPDMf top;
-	private ClassLoader cl;
+	private static Map<String, Journal> instance = null;
 	
 	public JournalLookupPersistentObject() { 
-		
-		String dirPath = System.getProperty("user.dir");
-		File dir = new File(dirPath);
-		this.jLookupFile = new File( dir + "/" + JLOOKUP_FILE );
-		
 	}
 	
-	public Map<String, Journal> regenerateJournalLookupFile(String dbName, String login, String password) throws Exception {
+	public static Map<String, Journal> regenerateJournalLookupFile(
+			String dbName, String login, String password, File jLookupFile) 
+					throws Exception {
 
 		//
 		// Build a temporary empty digital library database 
 		// - this will throw an error if the database already exists.
 		//
-		URL archiveUrl = this.getClass().getClassLoader().getResource(
+		URL archiveUrl = JournalLookupPersistentObject.class.getClassLoader().getResource(
 				"edu/isi/bmkeg/digitalLibrary/digitalLibrary-mysql.zip");
 		File archiveFile = new File( archiveUrl.getPath() );
 
@@ -104,27 +98,42 @@ public class JournalLookupPersistentObject {
 		
 	}
 
-	public Map<String, Journal> readJLookup(String dbName, String login, String password) throws Exception {
+	public static Map<String, Journal> readJLookup(String dbName, String login, String password) throws Exception {
 
+		if( instance != null )
+			return instance;
+		
+		String dirPath = System.getProperty("user.dir");
+		File dir = new File(dirPath);
+		File jLookupFile = new File( dir + "/" + JLOOKUP_FILE );
+		Map<String, Journal> jLookup = new HashMap<String, Journal>();
+		
 		if( !jLookupFile.exists() ) {
 
 			logger.info("No journal lookup file found, regenerating the file.");
-			this.jLookup = this.regenerateJournalLookupFile(dbName, login, password);
+			jLookup = regenerateJournalLookupFile(dbName, login, password, jLookupFile);
 
 		} else {
 
 			logger.info("Journal lookup file found, loading directly from disk");
 			byte[] b = Converters.fileContentsToBytesArray(jLookupFile);
 			Object o = Converters.byteArrayToObject(b);
-			this.jLookup = (Map<String, Journal>) o;
+			jLookup = (Map<String, Journal>) o;
 		
 		}
+		
+		instance = jLookup;
 		
 		return jLookup;
 	}
 
-	public Map<String, Journal> readJLookup() throws Exception {
+	public static Map<String, Journal> readJLookup() throws Exception {
 
+		String dirPath = System.getProperty("user.dir");
+		File dir = new File(dirPath);
+		File jLookupFile = new File( dir + "/" + JLOOKUP_FILE );
+		Map<String, Journal> jLookup = null;
+		
 		if( !jLookupFile.exists() ) {
 
 			throw new Exception("No journal lookup file found, need to regenerate the file.");
@@ -134,7 +143,7 @@ public class JournalLookupPersistentObject {
 			logger.info("Journal lookup file found, loading directly from disk");
 			byte[] b = Converters.fileContentsToBytesArray(jLookupFile);
 			Object o = Converters.byteArrayToObject(b);
-			this.jLookup = (Map<String, Journal>) o;
+			jLookup = (Map<String, Journal>) o;
 		
 		}
 		

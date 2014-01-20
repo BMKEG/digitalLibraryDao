@@ -139,6 +139,7 @@ public class VpdmfMedlineHandler implements MedlineHandler {
 		article.setVolume(j.journalIssue().volume());
 		if( article.getVolume() == null || article.getVolume().length() == 0 ) {
 			article.setVolume("-");
+			article.setVolValue(-1);
 		}
 
 		article.setIssue(j.journalIssue().issue());

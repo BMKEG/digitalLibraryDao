@@ -36,9 +36,6 @@ public class ImportMedlineDirectory {
 		DigitalLibraryEngine de = new DigitalLibraryEngine();
 		de.initializeVpdmfDao(login, password, dbName);
 		
-		// Load existing pmids from database
-		Map<Integer, Long> pmidMap = de.buildPmidLookupFromDb();
-		
 		de.loadMedlineArchiveDirectory(fileDir);
 				
 	}

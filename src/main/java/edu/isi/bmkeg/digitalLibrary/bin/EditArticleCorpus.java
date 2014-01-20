@@ -88,7 +88,7 @@ public class EditArticleCorpus {
 			Date d = new Date();
 			c.setDate(d.toString());
 			
-			de.insertArticleCorpus(c);
+			de.getDigLibDao().insertArticleCorpus(c);
 		
 		} else if( lviList.size() == 1 ) {
 			
