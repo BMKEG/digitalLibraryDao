@@ -41,8 +41,8 @@ import edu.isi.bmkeg.uml.model.UMLclass;
 import edu.isi.bmkeg.utils.Converters;
 import edu.isi.bmkeg.utils.TextUtils;
 import edu.isi.bmkeg.utils.xml.XmlBindingTools;
+import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngineImpl;
 import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngine;
-import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.VPDMfChangeEngineInterface;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.definitions.PrimitiveDefinition;
 import edu.isi.bmkeg.vpdmf.model.definitions.PrimitiveLink;
@@ -86,7 +86,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		return coreDao;
 	}
 
-	private VPDMfChangeEngineInterface getCe() {
+	private ChangeEngine getCe() {
 		return coreDao.getCe();
 	}
 
@@ -370,7 +370,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 		int count = 0;
 
-		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
 		VPDMf top = ce.readTop();
 		ViewDefinition vd = top.getViews().get("ArticleCorpus");
 
@@ -433,7 +433,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 		int count = 0;
 
-		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
 		VPDMf top = ce.readTop();
 
 		ce.connectToDB();
@@ -476,7 +476,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 	public boolean fullyDeleteArticle(Long articleId) throws Exception {
 
-		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
 
 		ce.connectToDB();
 		ce.turnOffAutoCommit();
@@ -557,7 +557,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		// database into
 		// a local file and then insert that as a batch function.
 		// - need to lock tables as we do this.
-		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
 
 		ce.connectToDB();
 		ce.turnOffAutoCommit();
@@ -625,7 +625,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		try {
 
 			int pgSz = 100;
-			ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+			ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
 			VPDMf top = ce.readTop();
 
 			ViewDefinition corVd = top.getViews().get("ArticleCorpus");
@@ -739,7 +739,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		int count = 0;
 		long t = System.currentTimeMillis();
 
-		ChangeEngine ce = (ChangeEngine) this.coreDao.getCe();
+		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
 
 		VPDMf top = ce.readTop();
 
