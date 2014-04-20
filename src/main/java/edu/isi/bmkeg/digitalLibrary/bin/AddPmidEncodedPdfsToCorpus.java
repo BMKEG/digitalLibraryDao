@@ -19,11 +19,8 @@ public class AddPmidEncodedPdfsToCorpus {
 		@Option(name = "-pdfs", usage = "Pdfs directory o file", required = true, metaVar = "PDF-DIR-OR-FILE")
 		public File pdfFileOrDr;
 		
-		@Option(name = "-corpus", usage = "Corpus name", required = true, metaVar = "CORPUS")
+		@Option(name = "-corpus", usage = "Corpus name", required = false, metaVar = "CORPUS")
 		public String corpusName;
-		
-		@Option(name = "-rules", usage = "Rules file", required = false, metaVar = "FILE")
-		public File pdfRuleFile = null;
 		
 		@Option(name = "-l", usage = "Database login", required = true, metaVar = "LOGIN")
 		public String login = "";
@@ -33,6 +30,9 @@ public class AddPmidEncodedPdfsToCorpus {
 
 		@Option(name = "-db", usage = "Database name", required = true, metaVar  = "DBNAME")
 		public String dbName = "";
+
+		@Option(name = "-wd", usage = "Working directory", required = true, metaVar  = "WDIR")
+		public String workingDirectory = "";
 		
 	}
 
@@ -55,18 +55,15 @@ public class AddPmidEncodedPdfsToCorpus {
 		
 			DigitalLibraryEngine de = null;
 			
-			if (options.pdfRuleFile != null) {
-				logger.info("Using rulefile " + options.pdfRuleFile.getAbsolutePath());
-				de = new DigitalLibraryEngine(options.pdfRuleFile);
-			} else {
-				de = new DigitalLibraryEngine();
-			}		
-			de.initializeVpdmfDao(options.login, options.password, options.dbName);
+			de = new DigitalLibraryEngine();
+			de.initializeVpdmfDao(options.login, options.password, options.dbName, options.workingDirectory);
 			
 			Map<Integer,Long> mapPmidsToVpdmfids = de.insertPmidPdfFileOrDir(options.pdfFileOrDr);
 			
-			de.loadArticlesFromPmidListToCorpus(mapPmidsToVpdmfids.keySet(), options.corpusName);		
-
+			if( options.corpusName != null) {
+				de.loadArticlesFromPmidListToCorpus(mapPmidsToVpdmfids.keySet(), options.corpusName);		
+			}
+			
 		} catch (CmdLineException e) {
 
 			System.err.println(e.getMessage());

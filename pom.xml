@@ -33,7 +33,7 @@
 							<artifactItems>
 								<artifactItem>
 									<groupId>edu.isi.bmkeg</groupId>
-									<artifactId>digitalLibrary</artifactId>
+									<artifactId>vpdmf-digitalLibrary</artifactId>
 									<type>zip</type>
 									<classifier>mysql</classifier>
 									<outputDirectory>${project.build.directory}/vpdmf/edu/isi/bmkeg/digitalLibrary</outputDirectory>
@@ -120,7 +120,7 @@
 
 		<dependency>
 			<groupId>edu.isi.bmkeg</groupId>
-			<artifactId>digitalLibrary</artifactId>
+			<artifactId>vpdmf-digitalLibrary</artifactId>
 			<type>zip</type>
 			<classifier>mysql</classifier>
 			<exclusions>
@@ -133,12 +133,12 @@
 
 		<dependency>
 		  <groupId>edu.isi.bmkeg</groupId>
-		  <artifactId>digitalLibrary-jpa</artifactId>
+		  <artifactId>vpdmf-digitalLibrary-jpa</artifactId>
 		</dependency>
 		
 		<dependency>
 		  <groupId>edu.isi.bmkeg</groupId>
-		  <artifactId>digitalLibrary-services</artifactId>
+		  <artifactId>vpdmf-digitalLibrary-services</artifactId>
 		</dependency>
 		
 		<dependency>

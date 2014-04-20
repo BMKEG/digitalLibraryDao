@@ -1,5 +1,6 @@
 package edu.isi.bmkeg.digitalLibrary.bin;
 
+import java.io.File;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,7 +9,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 
+import edu.isi.bmkeg.digitalLibrary.bin.AddPmidEncodedPdfsToCorpus.Options;
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.utils.pubmed.ESearcher;
@@ -17,34 +22,58 @@ import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
 public class BuildCorpusFromMedlineQuery {
 
 	public static String USAGE = "arguments: <name> <queryString> " 
-			+ "<dbName> <login> <password>";
+			+ "<dbName> <login> <password> <workingDirectory>";
 
 	private static Logger logger = Logger.getLogger(BuildCorpusFromMedlineQuery.class);
 
 	private VPDMf top;
+	
+	public static class Options {
+
+		@Option(name = "-query", usage = "Medline query", required = true, metaVar = "PDF-DIR-OR-FILE")
+		public String queryString;
+		
+		@Option(name = "-corpus", usage = "Corpus name", required = false, metaVar = "CORPUS")
+		public String corpusName;
+				
+		@Option(name = "-l", usage = "Database login", required = true, metaVar = "LOGIN")
+		public String login = "";
+
+		@Option(name = "-p", usage = "Database password", required = true, metaVar = "PASSWD")
+		public String password = "";
+
+		@Option(name = "-db", usage = "Database name", required = true, metaVar  = "DBNAME")
+		public String dbName = "";
+
+		@Option(name = "-wd", usage = "Working directory", required = true, metaVar  = "WDIR")
+		public String workingDirectory = "";
+		
+	}
 	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
 
-		if( args.length != 5 ) {
-			System.err.println(USAGE);
-			System.exit(-1);
-		}
-
-		String corpusName = args[0];
-		String queryString = args[1];
-
-		String dbName = args[2];
-		String login = args[3];
-		String password = args[4];
+		Options options = new Options();
 		
+		CmdLineParser parser = new CmdLineParser(options);
+
 		DigitalLibraryEngine dlEng = new DigitalLibraryEngine ();
-		dlEng.initializeVpdmfDao(login, password, dbName);
 		
 		try {
+
+			parser.parseArgument(args);
+
+			String corpusName = options.corpusName;
+			String queryString = options.queryString;
+	
+			String dbName = options.dbName;
+			String login = options.login;
+			String password = options.password;
+			String workingDirectory = options.workingDirectory;
 			
+			dlEng.initializeVpdmfDao(login, password, dbName, workingDirectory);			
 			dlEng.getDigLibDao().getCoreDao().connectToDb();
 			
 			ESearcher eSearcher = new ESearcher(queryString);
@@ -102,15 +131,25 @@ public class BuildCorpusFromMedlineQuery {
 
 			dlEng.getDigLibDao().getCoreDao().commitTransaction();
 
-		} catch (Exception e) {
-			
-			e.printStackTrace();
-			dlEng.getDigLibDao().getCoreDao().rollbackTransaction();
+		} catch (CmdLineException e) {
 
-		}
+			System.err.println(e.getMessage());
+			System.err.print("Arguments: ");
+			parser.printSingleLineUsage(System.err);
+			System.err.println("\n\n Options: \n");
+			parser.printUsage(System.err);
+			System.exit(-1);
 		
-		dlEng.getDigLibDao().getCoreDao().closeDbConnection();
+		} catch (Exception e2) {
 
+			e2.printStackTrace();
+			dlEng.getDigLibDao().getCoreDao().rollbackTransaction();
+			
+		} finally {
+		
+			dlEng.getDigLibDao().getCoreDao().closeDbConnection();
+		
+		}
 		
 	}
 

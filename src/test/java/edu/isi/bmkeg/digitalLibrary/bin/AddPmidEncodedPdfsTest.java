@@ -26,7 +26,7 @@ public class AddPmidEncodedPdfsTest {
 	
 	ApplicationContext ctx;
 	
-	String login, password, dbUrl;
+	String login, password, dbUrl, wd;
 	File archiveFile, pdfDir;
 	VPDMfKnowledgeBaseBuilder builder;
 	
@@ -39,6 +39,7 @@ public class AddPmidEncodedPdfsTest {
 		login = prop.getDbUser();
 		password = prop.getDbPassword();
 		dbUrl = prop.getDbUrl();
+		wd = prop.getWorkingDirectory();
 		
 		int l = dbUrl.lastIndexOf("/");
 		if (l != -1)
@@ -81,10 +82,14 @@ public class AddPmidEncodedPdfsTest {
 	public final void testRunExecWithFullPaths() throws Exception {
 				
 		String[] args = new String[] { 
-				pdfDir.getPath(), dbUrl, login, password
+				"-pdfs", pdfDir.getPath(), 
+				"-db", dbUrl,
+				"-l", login,
+				"-p", password,
+				"-wd", wd
 				};
 
-		AddPmidEncodedPdfs.main(args);
+		AddPmidEncodedPdfsToCorpus.main(args);
 				
 	}
 		

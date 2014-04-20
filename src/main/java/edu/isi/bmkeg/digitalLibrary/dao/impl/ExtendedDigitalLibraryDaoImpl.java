@@ -3,10 +3,11 @@ package edu.isi.bmkeg.digitalLibrary.dao.impl;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,33 +17,32 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.context.WebApplicationContext;
 
 import edu.isi.bmkeg.digitalLibrary.dao.ExtendedDigitalLibraryDao;
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
+import edu.isi.bmkeg.digitalLibrary.model.citations.JournalEpoch;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ArticleCitation_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Corpus_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ID_qo;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.JournalEpoch_qo;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Journal_qo;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.ftd.model.FTDRuleSet;
 import edu.isi.bmkeg.ftd.model.qo.FTDFragment_qo;
-import edu.isi.bmkeg.ftd.model.qo.FTDRuleSet_qo;
 import edu.isi.bmkeg.ftd.model.qo.FTD_qo;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
-import edu.isi.bmkeg.lapdf.pmcXml.PmcXmlArticle;
 import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
 import edu.isi.bmkeg.uml.model.UMLclass;
 import edu.isi.bmkeg.utils.Converters;
-import edu.isi.bmkeg.utils.TextUtils;
 import edu.isi.bmkeg.utils.xml.XmlBindingTools;
-import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngineImpl;
 import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngine;
+import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngineImpl;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.definitions.PrimitiveDefinition;
 import edu.isi.bmkeg.vpdmf.model.definitions.PrimitiveLink;
@@ -52,7 +52,6 @@ import edu.isi.bmkeg.vpdmf.model.instances.AttributeInstance;
 import edu.isi.bmkeg.vpdmf.model.instances.ClassInstance;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 import edu.isi.bmkeg.vpdmf.model.instances.PrimitiveInstance;
-import edu.isi.bmkeg.vpdmf.model.instances.ViewBasedObjectGraph;
 import edu.isi.bmkeg.vpdmf.model.instances.ViewInstance;
 
 @Repository
@@ -248,116 +247,126 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 	// ~~~~~~~~~~~~~~~~~~~~
 	@Override
 	public long addPdfToArticleCitation(LapdfDocument doc, ArticleCitation ac,
-			File pdf, File ruleFile) throws Exception {
+			File pdf) throws Exception {
 
 		FTD ftd = new FTD();
-
+		String wd = this.getCoreDao().getWorkingDirectory();
+		
+		String dirPth = "pdfs/" + ac.getJournal().getAbbr() + 
+				"/" + ac.getPubYear() + "/" + ac.getVolValue();
+		dirPth = dirPth.replaceAll("\\s+", "_");
+		File pdfDir = new File(wd + "/" + dirPth);	
+		File newPdf = new File(wd + "/" + dirPth + "/" + pdf.getName());
+		
+		boolean status = pdfDir.mkdirs();
+		
+		// Copy file intot te 
+		FileUtils.copyFile(pdf, newPdf);
+		
 		//
 		// Here is where we run the pdf2Swf command.
 		//
-		addSwfToFtd(pdf, ftd);
+		String pth = dirPth + "/" + pdf.getName();
+		addSwfToFtd(newPdf, ftd);
 
-		ftd.setChecksum(Converters.checksum(pdf));
-		ftd.setName(pdf.getPath());
+		ftd.setChecksum(Converters.checksum(newPdf));
+		ftd.setName(pth);
+		
+		String pthStem = pth.substring(0,pth.length()-4);
 
-		PmcXmlArticle pmcXml = doc.convertToPmcXmlFormat();
+		/*PmcXmlArticle pmcXml = doc.convertToPmcXmlFormat();
 		StringWriter writer = new StringWriter();
 		XmlBindingTools.generateXML(pmcXml, writer);
-		ftd.setPmcXml(writer.toString());
-
+		String pmcXmlStr = writer.toString();
+		File pmcXmlFile = new File( wd + "/" + pthStem + "_pmc.xml" );
+		FileUtils.writeStringToFile(pmcXmlFile, pmcXmlStr);
+		ftd.setPmcXmlFile(pthStem + "_pmc.xml");*/
+		
 		LapdftextXMLDocument xml = doc.convertToLapdftextXmlFormat();
-		writer = new StringWriter();
+		File xmlFile = new File( wd + "/" + pthStem + "_lapdf.xml" );
+		FileWriter writer = new FileWriter(xmlFile);
 		XmlBindingTools.generateXML(xml, writer);
-		ftd.setXml(writer.toString());
+		ftd.setXmlFile( pthStem + "_lapdf.xml");
 
 		ftd.setCitation(ac);
 		ac.setFullText(ftd);
 
-		FTDRuleSet rs = new FTDRuleSet();
-		String s = ruleFile.getName();
-		s = s.substring(0, s.lastIndexOf("."));
-		s = s.replaceAll("_drl", "");
-		rs.setRsName(s);
-		rs.setRsDescription("-");
-		rs.setFileName(ruleFile.getName());
-		if (ruleFile.getName().endsWith(".drl")) {
-			rs.setRuleBody(TextUtils.readFileToString(ruleFile));
-		} else if (ruleFile.getName().endsWith(".csv")) {
-			rs.setCsv(FileUtils.readFileToString(ruleFile));
-		} else if (ruleFile.getName().endsWith(".xls")) {
-			rs.setExcelFile(Converters.fileContentsToBytesArray(ruleFile));
-		}
-
 		long adId = -1;
 
-		FTDRuleSet_qo rsQo = new FTDRuleSet_qo();
-		rsQo.setRsName(s);
-		List<LightViewInstance> lFtd = this.getCoreDao().listInTrans(rsQo,
-				"FTDRuleSet");
-		long rsId = -1;
-		if (lFtd.size() == 0) {
-			rsId = this.getCoreDao().insertInTrans(rs, "FTDRuleSet");
-			rs.setVpdmfId(rsId);
-		} else {
-			rs.setVpdmfId(lFtd.get(0).getVpdmfId());
-			rsId = this.getCoreDao().updateInTrans(rs, "FTDRuleSet");
-		}
+		//
+		// Note that we do not set rule sets to link to ftd's here
+		// We handle the assigment of rule sets via journal epochs.
+		// ftd.setRuleSet(rs);
+		//
+		FTD_qo ftdQo = new FTD_qo();
+		ftdQo.setChecksum(ftd.getChecksum());
+		List<LightViewInstance> lviList = this.getCoreDao().listInTrans(ftdQo,
+				"ArticleDocument");
 
-		ftd.setRuleSet(rs);
-		adId = this.getCoreDao().insertInTrans(ftd, "ArticleDocument");
+		if (lviList.size() == 0) {
+			adId = this.getCoreDao().insertInTrans(ftd, "ArticleDocument");
+		} else if (lviList.size() == 1) {
+			ftd.setVpdmfId(lviList.get(0).getVpdmfId());
+			adId = this.getCoreDao().updateInTrans(ftd, "ArticleDocument");
+		} else {
+			throw new Exception("Ambiguous data");
+		}
 
 		return adId;
 
 	}
 
-	public void addSwfToFtd(File pdf, FTD ftd) throws Exception, IOException {
+	public String addSwfToFtd(File pdf, FTD ftd) throws Exception, IOException {
 
 		File swfBinDir = Converters.readAppDirectory("swftools");
-
-		if (swfBinDir != null) {
-
-			String swfPath = swfBinDir + "/pdf2swf";
-			if (System.getProperty("os.name").toLowerCase().contains("win")) {
-				swfPath += ".exe";
-			}
-
-			String pdfStem = pdf.getName().replaceAll("\\.pdf", "");
-			File swfFile = new File(pdf.getParent() + "/" + pdfStem + ".swf");
-
-			Process p = Runtime.getRuntime().exec(
-					swfPath + " " + pdf.getPath() + " -o " + swfFile.getPath());
-
-			InputStream in = p.getInputStream();
-			BufferedInputStream buf = new BufferedInputStream(in);
-			InputStreamReader inread = new InputStreamReader(buf);
-			BufferedReader bufferedreader = new BufferedReader(inread);
-			String line, out = "";
-			while ((line = bufferedreader.readLine()) != null) {
-				out += line + "\n";
-			}
-			// Check for maven failure
-			try {
-				if (p.waitFor() != 0) {
-					out += "exit value = " + p.exitValue() + "\n";
-				}
-			} catch (InterruptedException e) {
-				out += "ERROR:\n" + e.getStackTrace().toString() + "\n";
-			} finally {
-				// Close the InputStream
-				bufferedreader.close();
-				inread.close();
-				buf.close();
-				in.close();
-			}
-
-			if (!swfFile.exists()) {
-				throw new Exception("pdf2swf-based swf generation failed: "
-						+ out);
-			}
-
-			ftd.setLaswf(Converters.fileContentsToBytesArray(swfFile));
-
+		String swfPath = swfBinDir + "/pdf2swf";
+		if (System.getProperty("os.name").toLowerCase().contains("win")) {
+			swfPath += ".exe";
 		}
+
+		String pdfStem = pdf.getName().replaceAll("\\.pdf", "");
+		File swfFile = new File(pdf.getParent() + "/" + pdfStem + ".swf");
+
+		Process p = Runtime.getRuntime().exec(swfPath + " " + 
+						pdf.getPath() + " -o " + swfFile.getPath());
+
+		if( p == null) {
+			throw new Exception("Can't find pdf2swf application on the PATH");
+		}
+	
+		InputStream in = p.getInputStream();
+		BufferedInputStream buf = new BufferedInputStream(in);
+		InputStreamReader inread = new InputStreamReader(buf);
+		BufferedReader bufferedreader = new BufferedReader(inread);
+		String line, out = "";
+		while ((line = bufferedreader.readLine()) != null) {
+			out += line + "\n";
+		}
+		// Check for maven failure
+		try {
+			if (p.waitFor() != 0) {
+				out += "exit value = " + p.exitValue() + "\n";
+			}
+		} catch (InterruptedException e) {
+			out += "ERROR:\n" + e.getStackTrace().toString() + "\n";
+		} finally {
+			// Close the InputStream
+			bufferedreader.close();
+			inread.close();
+			buf.close();
+			in.close();
+		}
+
+		if (!swfFile.exists()) {
+			throw new Exception("pdf2swf-based swf generation failed: " + out);
+		}
+
+		String pth = swfFile.getPath();
+		pth = pth.substring(this.getCoreDao().getWorkingDirectory().length(), 
+				pth.length());
+		ftd.setLaswfFile(pth);
+		
+		return pth;
 
 	}
 
@@ -412,6 +421,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 			}
 
+			ce.clearQuery();
 			ce.commitTransaction();
 
 		} catch (Exception e) {
@@ -827,7 +837,8 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 			LightViewInstance lvi = lLvi.get(0);
 			String[] idxTup = lvi.getIndexTuple().split("\\{\\|\\}");
-			String[] idxTupFields = lvi.getIndexTupleFields().split("\\{\\|\\}");
+			String[] idxTupFields = lvi.getIndexTupleFields()
+					.split("\\{\\|\\}");
 			int countBlocks = -1;
 			for (int i = 0; i < idxTupFields.length; i++) {
 				if (idxTupFields[i].equals("FTDFragment_4")) {
@@ -865,6 +876,70 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		}
 
 		return true;
+
+	}
+
+	@Override
+	public JournalEpoch retriveJournalEpochForCitation(ArticleCitation ac)
+			throws Exception {
+
+		JournalEpoch_qo jeQo = new JournalEpoch_qo();
+		Journal_qo jQo = new Journal_qo();
+		jeQo.setJournal(jQo);
+		jQo.setAbbr(ac.getJournal().getAbbr());
+		jeQo.setStartVol("<vpdmf-lteq>" + ac.getVolValue());
+		jeQo.setEndVol("<vpdmf-gteq>" + ac.getVolValue());
+
+		List<LightViewInstance> lviList = this.coreDao.listInTrans(jeQo,
+				"JournalEpoch");
+
+		if (lviList.size() == 1) {
+
+			LightViewInstance lvi = lviList.get(0);
+			return this.coreDao.findByIdInTrans(lvi.getVpdmfId(),
+					new JournalEpoch(), "JournalEpoch");
+
+		} else if (lviList.size() == 0) {
+
+			return null;
+
+		} else {
+
+			throw new Exception("Ambiguous Journal Epoch for "
+					+ ac.getJournal().getAbbr() + ", vol: " + ac.getVolValue());
+
+		}
+
+	}
+
+	@Override
+	public FTDRuleSet readRuleFileFromDisk(File ruleFile) throws Exception {
+
+		String wdPth = this.getCoreDao().getWorkingDirectory();
+		File ruleDir = new File(wdPth + "/rules");
+		if( !ruleDir.exists() ) {
+			ruleDir.mkdirs();
+		}
+			
+		FTDRuleSet rs = new FTDRuleSet();
+		String s = ruleFile.getName();
+		s = s.substring(0, s.lastIndexOf("."));
+		s = s.replaceAll("_drl", "");
+		rs.setRsName(s);
+		rs.setRsDescription("-");
+		rs.setFileName(ruleFile.getName());
+		rs.setFilePath("rules/" + ruleFile.getName());
+		FileUtils.copyFileToDirectory(ruleFile, ruleDir);
+
+		if (ruleFile.getName().endsWith(".drl")) {
+			rs.setFileType("drl");
+		} else if (ruleFile.getName().endsWith(".csv")) {
+			rs.setFileType("csv");
+		} else if (ruleFile.getName().endsWith(".xls")) {
+			rs.setFileType("xls");
+		}
+
+		return rs;
 
 	}
 

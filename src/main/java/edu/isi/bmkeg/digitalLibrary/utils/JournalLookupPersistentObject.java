@@ -32,7 +32,7 @@ public class JournalLookupPersistentObject {
 	}
 	
 	public static Map<String, Journal> regenerateJournalLookupFile(
-			String dbName, String login, String password, File jLookupFile) 
+			String dbName, String login, String password, String workingDirectory, File jLookupFile) 
 					throws Exception {
 
 		//
@@ -44,7 +44,7 @@ public class JournalLookupPersistentObject {
 		File archiveFile = new File( archiveUrl.getPath() );
 
 		CoreDaoImpl dlVpdmf = new CoreDaoImpl();
-		dlVpdmf.init(login, password, dbName);
+		dlVpdmf.init(login, password, dbName, workingDirectory);
 			
 		//
 		// Query this database to generate a local map of journals indexed by name.
@@ -63,7 +63,7 @@ public class JournalLookupPersistentObject {
 		int jCount = dlVpdmf.getCe().executeCountQuery(qVi);
 		int pageSize = 1000;
 		dlVpdmf.getCe().setMaxReturnedInQuery(pageSize*100);
-		for( int i=0; i<jCount+pageSize; i=i+pageSize) {
+		for( int i=0; i<jCount; i=i+pageSize) {
 			
 			qVi = new ViewInstance(vd);
 			List<ViewInstance> viewList = dlVpdmf.getCe().executeFullQuery(qVi, true, i, pageSize);
@@ -98,7 +98,7 @@ public class JournalLookupPersistentObject {
 		
 	}
 
-	public static Map<String, Journal> readJLookup(String dbName, String login, String password) throws Exception {
+	public static Map<String, Journal> readJLookup(String dbName, String login, String password, String workingDirectory) throws Exception {
 
 		if( instance != null )
 			return instance;
@@ -111,7 +111,7 @@ public class JournalLookupPersistentObject {
 		if( !jLookupFile.exists() ) {
 
 			logger.info("No journal lookup file found, regenerating the file.");
-			jLookup = regenerateJournalLookupFile(dbName, login, password, jLookupFile);
+			jLookup = regenerateJournalLookupFile(dbName, login, password, workingDirectory, jLookupFile);
 
 		} else {
 

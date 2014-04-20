@@ -13,6 +13,7 @@ import edu.isi.bmkeg.digitalLibrary.model.citations.JournalEpoch;
 import edu.isi.bmkeg.digitalLibrary.model.citations.LiteratureCitation;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
+import edu.isi.bmkeg.ftd.model.FTDRuleSet;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
@@ -45,6 +46,11 @@ public interface ExtendedDigitalLibraryDao {
 	public FTD findArticleDocumentByPmidInTrans(Integer pmid) throws Exception;
 	
 	public FTD findArticleDocumentByIdInTrans(String idCode, Integer id) throws Exception;
+
+	public JournalEpoch retriveJournalEpochForCitation(ArticleCitation ac) throws Exception;
+	
+	public FTDRuleSet readRuleFileFromDisk(File ruleFile) throws Exception;
+	
 	
 	// ~~~~~~~~~~~~~~~~~~~
 	// Delete Functions
@@ -65,10 +71,9 @@ public interface ExtendedDigitalLibraryDao {
 	
 	public long addPdfToArticleCitation(LapdfDocument doc, 
 			ArticleCitation ac, 
-			File pdf,
-			File ruleFile) throws Exception;
+			File pdf) throws Exception;
 	
-	public void addSwfToFtd(File pdf, FTD ftd) throws Exception, IOException;
+	public String addSwfToFtd(File pdf, FTD ftd) throws Exception, IOException;
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Remove x from y functions

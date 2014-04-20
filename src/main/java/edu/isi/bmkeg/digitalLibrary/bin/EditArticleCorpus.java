@@ -38,6 +38,8 @@ public class EditArticleCorpus {
 		@Option(name = "-db", usage = "Database name", required = true, metaVar  = "DBNAME")
 		public String dbName = "";
 
+		@Option(name = "-wd", usage = "Working directory", required = true, metaVar  = "WDIR")
+		public String workingDirectory = "";
 		
 	}
 
@@ -57,6 +59,7 @@ public class EditArticleCorpus {
 			parser.parseArgument(args);
 		
 		} catch (CmdLineException e) {
+			
 			System.err.println(e.getMessage());
 			System.err.print("Arguments: ");
 			parser.printSingleLineUsage(System.err);
@@ -69,7 +72,7 @@ public class EditArticleCorpus {
 		DigitalLibraryEngine de = null;
 		
 		de = new DigitalLibraryEngine();
-		de.initializeVpdmfDao(options.login, options.password, options.dbName);
+		de.initializeVpdmfDao(options.login, options.password, options.dbName, options.workingDirectory);
 
 		Corpus_qo qc = new Corpus_qo();
 		qc.setName(options.name);
