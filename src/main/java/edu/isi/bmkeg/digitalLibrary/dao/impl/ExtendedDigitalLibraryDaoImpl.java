@@ -3,12 +3,13 @@ package edu.isi.bmkeg.digitalLibrary.dao.impl;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -213,27 +213,40 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 	// List functions
 	// ~~~~~~~~~~~~~~
 
-	public Map<Integer, Long> lookupPmidsInTrans(Set<Integer> pmids)
+	public Map<Integer, Long> lookupPmidsInTrans(Collection<Integer> pmids, int pageSize)
 			throws Exception {
 
 		Map<Integer, Long> pmidMap = new HashMap<Integer, Long>();
 
-		Iterator<Integer> it = pmids.iterator();
-		while (it.hasNext()) {
-			Integer pmid = it.next();
-
-			ArticleCitation_qo acQo = new ArticleCitation_qo();
-			acQo.setPmid(pmid.toString());
-			ArticleCitation ac = new ArticleCitation();
-			List<ArticleCitation> lci = this.getCoreDao().listClassInTrans(
-					acQo, ac);
-
-			if (lci.size() == 1) {
-				pmidMap.put(pmid, lci.get(0).getVpdmfId());
-			} else if (lci.size() == 0) {
-				logger.debug("Can't find pmid: " + pmid);
+		int i = 0, j = 0;
+		ArticleCitation_qo acQo = new ArticleCitation_qo();
+		
+		for ( Integer pmid : pmids) {
+			
+			if( acQo.getPmid() == null ) {
+				acQo.setPmid(pmid.toString());				
 			} else {
-				logger.info("pmmid: " + pmid + " ambiguous ");
+				acQo.setPmid(acQo.getPmid() + "<vpdmf-or>" + pmid.toString());
+			}
+
+			if( i == pageSize ) {
+				
+				ArticleCitation ac = new ArticleCitation();
+				List<ArticleCitation> l = this.getCoreDao().listClassInTrans(
+						acQo, ac);
+
+				for( ArticleCitation ci : l) {
+						pmidMap.put(pmid, ac.getVpdmfId());
+				} 
+			
+				i = 0;
+				j++;
+				System.out.println(j);
+
+			} else {
+			
+				i++;
+			
 			}
 
 		}
@@ -242,6 +255,34 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 	}
 
+	public Map<Integer, Long> listAllPmidsInTrans()
+			throws Exception {
+
+		Map<Integer, Long> pmidMap = new HashMap<Integer, Long>();
+
+		int i = 0, j = 0;
+		ArticleCitation_qo acQo = new ArticleCitation_qo();	
+		ArticleCitation ac = new ArticleCitation();
+		
+		// Let's do this quickly 
+		// Resort to low level SQL.
+		String sql = "SELECT DISTINCT ac.pmid, ac.vpdmfId " +
+				"FROM ArticleCitation AS ac"; 
+		ResultSet rs = this.getCoreDao().getCe().executeRawSqlQuery(
+				sql );
+
+		while(rs.next()) {
+			Long vpdmfId = rs.getLong("vpdmfId");
+			Integer pmid = rs.getInt("pmid");
+			pmidMap.put(pmid, vpdmfId);
+		}
+		
+		return pmidMap;
+
+	}
+	
+	
+	
 	// ~~~~~~~~~~~~~~~~~~~~
 	// Add x to y functions
 	// ~~~~~~~~~~~~~~~~~~~~
@@ -553,14 +594,14 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 	}
 
-	public void addArticlesToCorpus(Set<Integer> keySet, String corpusName)
+	public void addArticlesToCorpus(List<Integer> keySet, String corpusName)
 			throws Exception {
 
 		this.addArticlesToCorpusUsingClasses(keySet, corpusName);
 
 	}
 
-	public void addArticlesToCorpusUsingClasses(Set<Integer> pmids,
+	public void addArticlesToCorpusUsingClasses(List<Integer> pmids,
 			String corpusName) throws Exception {
 
 		// We are going to write the data that we want to insert into the
@@ -585,7 +626,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 				.iterator().next();
 		UMLclass link = pl.getRole().getAss().getLinkClass();
 
-		Map<Integer, Long> bmkegIdMap = lookupPmidsInTrans(pmids);
+		Map<Integer, Long> bmkegIdMap = lookupPmidsInTrans(pmids, 100);
 
 		try {
 			List<Integer> pmidList = new ArrayList<Integer>(pmids);

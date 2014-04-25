@@ -1,19 +1,14 @@
 package edu.isi.bmkeg.digitalLibrary.bin;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import edu.isi.bmkeg.digitalLibrary.bin.AddPmidEncodedPdfsToCorpus.Options;
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.utils.pubmed.ESearcher;
@@ -78,7 +73,7 @@ public class BuildCorpusFromMedlineQuery {
 			
 			ESearcher eSearcher = new ESearcher(queryString);
 			int maxCount = eSearcher.getMaxCount();
-			Set<Integer> esearchIds = new HashSet<Integer>();
+			List<Integer> esearchIds = new ArrayList<Integer>();
 			for(int i=0; i<maxCount; i=i+1000) {
 	
 				long t = System.currentTimeMillis();

@@ -2,21 +2,19 @@ package edu.isi.bmkeg.digitalLibrary.dao;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
-import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.digitalLibrary.model.citations.JournalEpoch;
-import edu.isi.bmkeg.digitalLibrary.model.citations.LiteratureCitation;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.ftd.model.FTDRuleSet;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
-import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 
 /**
  * Defines the interface to a Data Access Object that manage the 
@@ -35,8 +33,10 @@ public interface ExtendedDigitalLibraryDao {
 	// Convenience Functions
 	// ~~~~~~~~~~~~~~~~~~~~~
 
-	public Map<Integer, Long> lookupPmidsInTrans(Set<Integer> keySet) throws Exception;
+	public Map<Integer, Long> lookupPmidsInTrans(Collection<Integer> keySet, int pageSize) throws Exception;
 
+	public Map<Integer, Long> listAllPmidsInTrans() throws Exception;
+	
 	public ArticleCitation findArticleByIdInTrans(String idCode, Integer id) throws Exception;
 
 	public ArticleCitation findArticleByPmidInTrans(Integer pmid) throws Exception;
@@ -67,7 +67,7 @@ public interface ExtendedDigitalLibraryDao {
 	
 	public int addArticlesToCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
 	
-	public void addArticlesToCorpus(Set<Integer> keySet, String corpusName) throws Exception;
+	public void addArticlesToCorpus(List<Integer> keySet, String corpusName) throws Exception;
 	
 	public long addPdfToArticleCitation(LapdfDocument doc, 
 			ArticleCitation ac, 

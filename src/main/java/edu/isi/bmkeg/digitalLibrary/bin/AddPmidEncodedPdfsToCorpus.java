@@ -1,6 +1,9 @@
 package edu.isi.bmkeg.digitalLibrary.bin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -61,7 +64,9 @@ public class AddPmidEncodedPdfsToCorpus {
 			Map<Integer,Long> mapPmidsToVpdmfids = de.insertPmidPdfFileOrDir(options.pdfFileOrDr);
 			
 			if( options.corpusName != null) {
-				de.loadArticlesFromPmidListToCorpus(mapPmidsToVpdmfids.keySet(), options.corpusName);		
+				List<Integer> ids = new ArrayList<Integer>(mapPmidsToVpdmfids.keySet());
+				Collections.sort(ids);
+				de.loadArticlesFromPmidListToCorpus(ids, options.corpusName);		
 			}
 			
 		} catch (CmdLineException e) {
