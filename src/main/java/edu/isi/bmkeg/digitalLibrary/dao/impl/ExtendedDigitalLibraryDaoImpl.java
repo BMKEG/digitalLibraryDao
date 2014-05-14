@@ -359,7 +359,8 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 	public String addSwfToFtd(File pdf, FTD ftd) throws Exception, IOException {
 
-		File swfBinDir = Converters.readAppDirectory("swftools");
+		File wd = new File(this.coreDao.getWorkingDirectory());
+		File swfBinDir = Converters.readAppDirectory("swftools", wd);
 		String swfPath = swfBinDir + "/pdf2swf";
 		if (System.getProperty("os.name").toLowerCase().contains("win")) {
 			swfPath += ".exe";
