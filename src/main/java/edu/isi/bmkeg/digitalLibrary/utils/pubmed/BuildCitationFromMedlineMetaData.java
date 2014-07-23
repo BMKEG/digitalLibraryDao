@@ -11,6 +11,9 @@ public class BuildCitationFromMedlineMetaData {
 	public int getPMIDFromMetadata(String author, String year,
 			String volume, String page) throws Exception {
 		
+		// simple fix for double-barreled names.
+		author = author.replaceAll("_", "%20");
+		
 		MedlineEUtilsService meus = new MedlineEUtilsService(MedlineEUtilsService.ESEARCH, MedlineEUtilsService.PUBMED);
 		EsearchHandler esh = (EsearchHandler) meus.getHandler();
 		

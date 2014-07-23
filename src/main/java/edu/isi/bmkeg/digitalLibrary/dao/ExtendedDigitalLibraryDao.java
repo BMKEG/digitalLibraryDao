@@ -33,7 +33,7 @@ public interface ExtendedDigitalLibraryDao {
 	// Convenience Functions
 	// ~~~~~~~~~~~~~~~~~~~~~
 
-	public Map<Integer, Long> lookupPmidsInTrans(Collection<Integer> keySet, int pageSize) throws Exception;
+	public Map<Integer, Long> lookupPmidsInTrans(Collection<Integer> keySet) throws Exception;
 
 	public Map<Integer, Long> listAllPmidsInTrans() throws Exception;
 	
@@ -68,6 +68,8 @@ public interface ExtendedDigitalLibraryDao {
 	public int addArticlesToCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
 	
 	public void addArticlesToCorpus(List<Integer> keySet, String corpusName) throws Exception;
+	
+	public void addArticlesToCorpusInTrans(List<Integer> pmids, String corpusName) throws Exception;
 	
 	public long addPdfToArticleCitation(LapdfDocument doc, 
 			ArticleCitation ac, 

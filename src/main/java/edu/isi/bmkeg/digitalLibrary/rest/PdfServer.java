@@ -93,7 +93,7 @@ public class PdfServer {
 			FTD ftd = this.ftdDao.findArticleDocumentById(vpdmfId);
 
 			String wd = this.ftdDao.getCoreDao().getWorkingDirectory();
-			File laSwfFile = new File( wd + "/pdfs/" + ftd.getLaswfFile() );
+			File laSwfFile = new File( wd + ftd.getLaswfFile() );
 			
 			if( !laSwfFile.exists() ) {
 				return new ResponseEntity<byte []>(HttpStatus.NOT_FOUND);
@@ -151,7 +151,7 @@ public class PdfServer {
 			FTD ftd = this.ftdDao.findArticleDocumentById(vpdmfId);
 			
 			String wd = this.ftdDao.getCoreDao().getWorkingDirectory();
-			File xmlFile = new File( wd + "/pdfs/" + ftd.getXmlFile() );
+			File xmlFile = new File( wd  + ftd.getXmlFile() );
 			
 			if( !xmlFile.exists() ) {
 				return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
@@ -209,7 +209,7 @@ public class PdfServer {
 			FTD ftd = this.ftdDao.findArticleDocumentById(vpdmfId);
 			
 			String wd = this.ftdDao.getCoreDao().getWorkingDirectory();
-			File pmcXmlFile = new File( wd + "/pdfs/" +  ftd.getPmcXmlFile() );
+			File pmcXmlFile = new File( wd + ftd.getPmcXmlFile() );
 			
 			if( !pmcXmlFile.exists() ) {
 				return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
@@ -268,7 +268,7 @@ public class PdfServer {
 			FTD ftd = this.ftdDao.findArticleDocumentById(vpdmfId);
 
 			String wd = this.ftdDao.getCoreDao().getWorkingDirectory();
-			File pmcXmlFile = new File( wd + "/pdfs/" +  ftd.getPmcXmlFile() );
+			File pmcXmlFile = new File( wd + "/" + ftd.getPmcXmlFile() );
 			
 			if( !pmcXmlFile.exists() ) {
 				return new ResponseEntity<String>(HttpStatus.NOT_FOUND);

@@ -7,7 +7,6 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +30,7 @@ import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.model.citations.ID;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
+import edu.isi.bmkeg.digitalLibrary.model.citations.JournalEpoch;
 import edu.isi.bmkeg.digitalLibrary.model.citations.URL;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ArticleCitation_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ID_qo;
@@ -40,6 +40,7 @@ import edu.isi.bmkeg.digitalLibrary.utils.pubmed.BuildCitationFromMedlineMetaDat
 import edu.isi.bmkeg.digitalLibrary.utils.pubmed.EFetcher;
 import edu.isi.bmkeg.ftd.dao.FtdDao;
 import edu.isi.bmkeg.ftd.model.FTD;
+import edu.isi.bmkeg.ftd.model.FTDRuleSet;
 import edu.isi.bmkeg.ftd.model.qo.FTD_qo;
 import edu.isi.bmkeg.lapdf.controller.LapdfVpdmfEngine;
 import edu.isi.bmkeg.lapdf.dao.vpdmf.LAPDFTextDaoImpl;
@@ -208,8 +209,8 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 	public Map<Integer,Long> insertPmidPdfFileOrDir(File pdfOrDir, boolean skipExisting) throws Exception {
 
 		Map<Integer,Long> pmidLookup = new HashMap<Integer,Long>();
-		
-		File tempDir = Files.createTempDir();
+
+		File workDir = new File(this.extDigLibDao.getCoreDao().getWorkingDirectory());
 		
 		if (pdfOrDir.isDirectory()) {
 
@@ -239,6 +240,13 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 					
 					LapdfDocument doc = this.blockifyFile(pdf);
 
+					JournalEpoch je = this.extDigLibDao.retriveJournalEpochForCitation(ac);
+					if( je != null && je.getRules() != null) {
+						FTDRuleSet rs = je.getRules();	
+						File ruleFile = new File(workDir.getPath() + "/" + rs.getFilePath());
+						this.classifyDocument(doc, ruleFile);
+					} 
+					
 					this.extDigLibDao.addPdfToArticleCitation(doc, ac, pdf);
 
 					pmidLookup.put(ac.getPmid(), ac.getVpdmfId());
@@ -262,18 +270,12 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 			LapdfDocument doc = this.blockifyFile(pdfOrDir);
 			
-/*			FTDRuleSet rs = null;
-			File ruleFile = this.getRuleFile();
 			JournalEpoch je = this.extDigLibDao.retriveJournalEpochForCitation(ac);
 			if( je != null && je.getRules() != null) {
-				rs = je.getRules();	
-				ruleFile = new File(tempDir + "/" + rs.getFileName());
-				this.extDigLibDao.dumpRuleFileToDisk(rs, ruleFile);
-			} else {
-				rs = this.extDigLibDao.readRuleFileFromDisk(this.getRuleFile());	
-			}
-
-			this.classifyDocument(doc, ruleFile);*/
+				FTDRuleSet rs = je.getRules();	
+				File ruleFile = new File(workDir.getPath() + "/" + rs.getFilePath());
+				this.classifyDocument(doc, ruleFile);
+			} 
 			
 			this.extDigLibDao.addPdfToArticleCitation(doc, ac, pdfOrDir);
 
@@ -500,7 +502,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 	public Map<Integer, Long> buildPmidLookup(Set<Integer> pmids)
 			throws Exception {
 
-		return (getExtDigLibDao().lookupPmidsInTrans(pmids, 100));
+		return (getExtDigLibDao().lookupPmidsInTrans(pmids));
 
 	}
 

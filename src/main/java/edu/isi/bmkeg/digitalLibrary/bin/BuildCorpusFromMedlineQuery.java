@@ -84,8 +84,8 @@ public class BuildCorpusFromMedlineQuery {
 				logger.info("esearch 1000 entries: " + deltaT / 1000.0
 						+ " s\n");
 				
-				logger.info("wait 3 secs");
-				Thread.sleep(3000);
+				logger.info("wait 1 sec");
+				Thread.sleep(1000);
 			}
 	
 			Corpus c = new Corpus();

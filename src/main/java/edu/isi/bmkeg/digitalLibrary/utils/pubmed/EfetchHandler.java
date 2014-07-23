@@ -9,6 +9,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Author;
+import edu.isi.bmkeg.digitalLibrary.model.citations.ID;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 
 class EfetchHandler extends DefaultHandler {
@@ -16,6 +17,7 @@ class EfetchHandler extends DefaultHandler {
 	ArticleCitation article;
 	Author person;
 	Journal journal;
+	ID id;
 
 	boolean error = false;
 
@@ -63,22 +65,15 @@ class EfetchHandler extends DefaultHandler {
 				this.exceptions.add(e);
 			}
 		}
-		/*
-		 * else if( currentMatch.endsWith("ArticleId") &&
-		 * this.currentAttribute.equals("pii") ) {
-		 * 
-		 * try { idCount = addLocalPrimitive( vi, "ID", idCount, "]ID|ID.id",
-		 * "pii:", ""); } catch (Exception ex) { ex.printStackTrace(); }
-		 * 
-		 * } else if( currentMatch.endsWith( ".MeshHeading.DescriptorName" ) ) {
-		 * 
-		 * try { keyCount = addLocalPrimitive( vi, "Keyword", keyCount,
-		 * "]Keyword|Keyword.value", "", ""); } catch (Exception ex) {
-		 * ex.printStackTrace(); }
-		 * 
-		 * }
-		 */
-
+		else if( currentMatch.endsWith("ArticleId") && 
+				!currentAttribute.equals("pubmed")) {
+		  
+		  id = new ID();
+		  id.setIdType(this.currentAttribute);
+		  article.getIds().add(id);
+		  
+		}
+		
 	}
 
 	public void endElement(String uri, String localName, String qName) {
@@ -196,9 +191,16 @@ class EfetchHandler extends DefaultHandler {
 			//
 			//
 			else if (currentMatch.endsWith(".PubmedArticle.MedlineCitation.PMID")) {
+			
 				article.setPmid(new Integer(value).intValue());
-			}
+			
+			} else if( currentMatch.endsWith("ArticleId") && 
+						!currentAttribute.equals("pubmed")) {
 
+				id.setIdValue(value);
+				
+			}
+			
 		} catch (Exception e) {
 
 			this.exceptions.add(e);

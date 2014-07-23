@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
@@ -213,76 +214,64 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 	// List functions
 	// ~~~~~~~~~~~~~~
 
-	public Map<Integer, Long> lookupPmidsInTrans(Collection<Integer> pmids, int pageSize)
-			throws Exception {
+	public Map<Integer, Long> lookupPmidsInTrans(Collection<Integer> pmids) throws Exception {
+
+		// Query based on a query constructed with SqlQueryBuilder based on the TriagedArticle view.
+		String selectSql = "SELECT vpdmfId, pmid ";
+
+		String countSql = "SELECT COUNT(*) ";
+					
+		String fromWhereSql = "FROM ArticleCitation AS a";
+		
+		ResultSet countRs = this.getCe().executeRawSqlQuery(
+				countSql + fromWhereSql);
+		countRs.next();
+		int count = countRs.getInt(1);
+		countRs.close();
+
+		ResultSet rs = this.getCe().executeRawSqlQuery(
+				selectSql + fromWhereSql);
+
+		Map<Integer, Long> pmidMap = new HashMap<Integer, Long>();
+		
+		while( rs.next() ) {
+
+			Long vpdmfId = rs.getLong("a.vpdmfId");
+			int pmid = rs.getInt("a.pmid");
+			
+			pmidMap.put(pmid, vpdmfId);
+
+		}
+		rs.close();
+	
+		return pmidMap;
+
+	}
+
+	public Map<Integer, Long> listAllPmidsInTrans() throws Exception {
 
 		Map<Integer, Long> pmidMap = new HashMap<Integer, Long>();
 
 		int i = 0, j = 0;
 		ArticleCitation_qo acQo = new ArticleCitation_qo();
-		
-		for ( Integer pmid : pmids) {
-			
-			if( acQo.getPmid() == null ) {
-				acQo.setPmid(pmid.toString());				
-			} else {
-				acQo.setPmid(acQo.getPmid() + "<vpdmf-or>" + pmid.toString());
-			}
-
-			if( i == pageSize ) {
-				
-				ArticleCitation ac = new ArticleCitation();
-				List<ArticleCitation> l = this.getCoreDao().listClassInTrans(
-						acQo, ac);
-
-				for( ArticleCitation ci : l) {
-						pmidMap.put(pmid, ac.getVpdmfId());
-				} 
-			
-				i = 0;
-				j++;
-				System.out.println(j);
-
-			} else {
-			
-				i++;
-			
-			}
-
-		}
-
-		return pmidMap;
-
-	}
-
-	public Map<Integer, Long> listAllPmidsInTrans()
-			throws Exception {
-
-		Map<Integer, Long> pmidMap = new HashMap<Integer, Long>();
-
-		int i = 0, j = 0;
-		ArticleCitation_qo acQo = new ArticleCitation_qo();	
 		ArticleCitation ac = new ArticleCitation();
-		
-		// Let's do this quickly 
-		// Resort to low level SQL.
-		String sql = "SELECT DISTINCT ac.pmid, ac.vpdmfId " +
-				"FROM ArticleCitation AS ac"; 
-		ResultSet rs = this.getCoreDao().getCe().executeRawSqlQuery(
-				sql );
 
-		while(rs.next()) {
+		// Let's do this quickly
+		// Resort to low level SQL.
+		String sql = "SELECT DISTINCT ac.pmid, ac.vpdmfId "
+				+ "FROM ArticleCitation AS ac";
+		ResultSet rs = this.getCoreDao().getCe().executeRawSqlQuery(sql);
+
+		while (rs.next()) {
 			Long vpdmfId = rs.getLong("vpdmfId");
 			Integer pmid = rs.getInt("pmid");
 			pmidMap.put(pmid, vpdmfId);
 		}
-		
+
 		return pmidMap;
 
 	}
-	
-	
-	
+
 	// ~~~~~~~~~~~~~~~~~~~~
 	// Add x to y functions
 	// ~~~~~~~~~~~~~~~~~~~~
@@ -292,18 +281,22 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 		FTD ftd = new FTD();
 		String wd = this.getCoreDao().getWorkingDirectory();
-		
-		String dirPth = "pdfs/" + ac.getJournal().getAbbr() + 
-				"/" + ac.getPubYear() + "/" + ac.getVolValue();
+
+		String dirPth = "pdfs/" + ac.getJournal().getAbbr() + "/"
+				+ ac.getPubYear() + "/" + ac.getVolValue();
 		dirPth = dirPth.replaceAll("\\s+", "_");
-		File pdfDir = new File(wd + "/" + dirPth);	
+		File pdfDir = new File(wd + "/" + dirPth);
 		File newPdf = new File(wd + "/" + dirPth + "/" + pdf.getName());
-		
+
 		boolean status = pdfDir.mkdirs();
-		
-		// Copy file intot te 
-		FileUtils.copyFile(pdf, newPdf);
-		
+
+		//
+		// if the file needs to be copied into place, do so.
+		//
+		if( !newPdf.getPath().equals(pdf.getPath()) ) {
+			FileUtils.copyFile(pdf, newPdf);
+		}
+
 		//
 		// Here is where we run the pdf2Swf command.
 		//
@@ -312,22 +305,23 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 		ftd.setChecksum(Converters.checksum(newPdf));
 		ftd.setName(pth);
-		
-		String pthStem = pth.substring(0,pth.length()-4);
 
-		/*PmcXmlArticle pmcXml = doc.convertToPmcXmlFormat();
-		StringWriter writer = new StringWriter();
-		XmlBindingTools.generateXML(pmcXml, writer);
-		String pmcXmlStr = writer.toString();
-		File pmcXmlFile = new File( wd + "/" + pthStem + "_pmc.xml" );
-		FileUtils.writeStringToFile(pmcXmlFile, pmcXmlStr);
-		ftd.setPmcXmlFile(pthStem + "_pmc.xml");*/
-		
+		String pthStem = pth.substring(0, pth.length() - 4);
+
+		/*
+		 * PmcXmlArticle pmcXml = doc.convertToPmcXmlFormat(); StringWriter
+		 * writer = new StringWriter(); XmlBindingTools.generateXML(pmcXml,
+		 * writer); String pmcXmlStr = writer.toString(); File pmcXmlFile = new
+		 * File( wd + "/" + pthStem + "_pmc.xml" );
+		 * FileUtils.writeStringToFile(pmcXmlFile, pmcXmlStr);
+		 * ftd.setPmcXmlFile(pthStem + "_pmc.xml");
+		 */
+
 		LapdftextXMLDocument xml = doc.convertToLapdftextXmlFormat();
-		File xmlFile = new File( wd + "/" + pthStem + "_lapdf.xml" );
+		File xmlFile = new File(wd + "/" + pthStem + "_lapdf.xml");
 		FileWriter writer = new FileWriter(xmlFile);
 		XmlBindingTools.generateXML(xml, writer);
-		ftd.setXmlFile( pthStem + "_lapdf.xml");
+		ftd.setXmlFile(pthStem + "_lapdf.xml");
 
 		ftd.setCitation(ac);
 		ac.setFullText(ftd);
@@ -369,13 +363,13 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		String pdfStem = pdf.getName().replaceAll("\\.pdf", "");
 		File swfFile = new File(pdf.getParent() + "/" + pdfStem + ".swf");
 
-		Process p = Runtime.getRuntime().exec(swfPath + " " + 
-						pdf.getPath() + " -o " + swfFile.getPath());
+		Process p = Runtime.getRuntime().exec(
+				swfPath + " " + pdf.getPath() + " -o " + swfFile.getPath());
 
-		if( p == null) {
+		if (p == null) {
 			throw new Exception("Can't find pdf2swf application on the PATH");
 		}
-	
+
 		InputStream in = p.getInputStream();
 		BufferedInputStream buf = new BufferedInputStream(in);
 		InputStreamReader inread = new InputStreamReader(buf);
@@ -404,10 +398,10 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		}
 
 		String pth = swfFile.getPath();
-		pth = pth.substring(this.getCoreDao().getWorkingDirectory().length(), 
+		pth = pth.substring(this.getCoreDao().getWorkingDirectory().length(),
 				pth.length());
 		ftd.setLaswfFile(pth);
-		
+
 		return pth;
 
 	}
@@ -598,64 +592,18 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 	public void addArticlesToCorpus(List<Integer> keySet, String corpusName)
 			throws Exception {
 
-		this.addArticlesToCorpusUsingClasses(keySet, corpusName);
-
-	}
-
-	public void addArticlesToCorpusUsingClasses(List<Integer> pmids,
-			String corpusName) throws Exception {
-
 		// We are going to write the data that we want to insert into the
 		// database into
 		// a local file and then insert that as a batch function.
 		// - need to lock tables as we do this.
 		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
 
-		ce.connectToDB();
-		ce.turnOffAutoCommit();
-
-		Corpus c = this.findCorpusByNameInTrans(corpusName);
-		if (c == null) {
-			throw new Exception("Could not find a corpus named: " + corpusName);
-		}
-		Long corpusId = c.getVpdmfId();
-
-		VPDMf top = ce.readTop();
-		ViewDefinition vd = top.getViews().get("ArticleCorpus");
-
-		PrimitiveLink pl = (PrimitiveLink) vd.getSubGraph().getEdges()
-				.iterator().next();
-		UMLclass link = pl.getRole().getAss().getLinkClass();
-
-		Map<Integer, Long> bmkegIdMap = lookupPmidsInTrans(pmids, 100);
-
 		try {
-			List<Integer> pmidList = new ArrayList<Integer>(pmids);
-			Collections.sort(pmidList);
-			Iterator<Integer> pmidIt = pmidList.iterator();
-			while (pmidIt.hasNext()) {
-				Integer pmid = pmidIt.next();
-				Long articleId = bmkegIdMap.get(pmid);
+			
+			ce.connectToDB();
+			ce.turnOffAutoCommit();
 
-				if (articleId == null)
-					continue;
-
-				ClassInstance linkCi = new ClassInstance(link);
-
-				AttributeInstance corpusIdAi = linkCi.getAttributes().get(
-						"corpora_id");
-				corpusIdAi.setValue(corpusId);
-
-				AttributeInstance articleIdAi = linkCi.getAttributes().get(
-						"resources_id");
-				articleIdAi.setValue(articleId);
-
-				List<ClassInstance> l = ce.queryClass(linkCi);
-				if (l.size() == 0) {
-					ce.insertObjectIntoDB(linkCi);
-				}
-
-			}
+			this.addArticlesToCorpusInTrans(keySet, corpusName);
 
 			ce.commitTransaction();
 
@@ -668,66 +616,51 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 			this.coreDao.getCe().closeDbConnection();
 
 		}
-
 	}
 
-	public void addArticlesToCorpusUsingViews(Set<Integer> pmids,
+	public void addArticlesToCorpusInTrans(List<Integer> pmids,
 			String corpusName) throws Exception {
 
-		try {
+		Corpus c = this.findCorpusByNameInTrans(corpusName);
+		if (c == null) {
+			throw new Exception("Could not find a corpus named: " + corpusName);
+		}
+		Long corpusId = c.getVpdmfId();
 
-			int pgSz = 100;
-			ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
-			VPDMf top = ce.readTop();
+		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
+		VPDMf top = ce.readTop();
+		ViewDefinition vd = top.getViews().get("ArticleCorpus");
 
-			ViewDefinition corVd = top.getViews().get("ArticleCorpus");
-			ViewInstance queryVi = new ViewInstance(corVd);
+		PrimitiveLink pl = (PrimitiveLink) vd.getSubGraph().getEdges()
+				.iterator().next();
+		UMLclass link = pl.getRole().getAss().getLinkClass();
 
-			ce.connectToDB();
-			ce.turnOffAutoCommit();
+		Map<Integer, Long> bmkegIdMap = lookupPmidsInTrans(pmids);
 
-			ViewInstance qVi = new ViewInstance(corVd);
-			PrimitiveDefinition articlePd = (PrimitiveDefinition) corVd
-					.getSubGraph().getNodes().get("ArticleCitationLU");
-			PrimitiveInstance corPi = qVi.getPrimaryPrimitive();
-			AttributeInstance corAi = qVi.readAttributeInstance("Corpus",
-					"Corpus", "name", 0);
-			corAi.setValue(corpusName);
+		List<Integer> pmidList = new ArrayList<Integer>(pmids);
+		Collections.sort(pmidList);
+		Iterator<Integer> pmidIt = pmidList.iterator();
+		while (pmidIt.hasNext()) {
+			Integer pmid = pmidIt.next();
+			Long articleId = bmkegIdMap.get(pmid);
 
-			List<LightViewInstance> corViList = ce.executeListQuery(qVi);
-			if (corViList.size() == 0) {
-				return;
+			if (articleId == null)
+				continue;
+
+			ClassInstance linkCi = new ClassInstance(link);
+
+			AttributeInstance corpusIdAi = linkCi.getAttributes().get(
+					"corpora_id");
+			corpusIdAi.setValue(corpusId);
+
+			AttributeInstance articleIdAi = linkCi.getAttributes().get(
+					"resources_id");
+			articleIdAi.setValue(articleId);
+
+			List<ClassInstance> l = ce.queryClass(linkCi);
+			if (l.size() == 0) {
+				ce.insertObjectIntoDB(linkCi);
 			}
-
-			List<ViewInstance> corpusList = ce.executeFullQuery(qVi);
-			ViewInstance corVi = corpusList.get(0);
-
-			ce.storeViewInstanceForUpdate(corVi);
-
-			// Build a large view instance and populate it.
-			int i = 0;
-			Iterator<Integer> pmidIt = pmids.iterator();
-			while (pmidIt.hasNext()) {
-				Integer pmid = pmidIt.next();
-
-				if (i >= corVi.countPrimitives(articlePd))
-					corVi.addNewPrimitiveInstance("ArticleCitationLU", i);
-
-				PrimitiveInstance citPi = (PrimitiveInstance) corVi
-						.getSubGraph().getNodes().get("AritcleCitationLU_" + i);
-				AttributeInstance citAi = corVi.readAttributeInstance(
-						"ArticleCitationLU", "ArticleCitation", "pmid", i);
-				citAi.setValue(pmid);
-				i++;
-
-			}
-
-			ce.executeUpdateQuery(corVi);
-			ce.commitTransaction();
-
-		} finally {
-
-			getCe().closeDbConnection();
 
 		}
 
@@ -959,10 +892,10 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 		String wdPth = this.getCoreDao().getWorkingDirectory();
 		File ruleDir = new File(wdPth + "/rules");
-		if( !ruleDir.exists() ) {
+		if (!ruleDir.exists()) {
 			ruleDir.mkdirs();
 		}
-			
+
 		FTDRuleSet rs = new FTDRuleSet();
 		String s = ruleFile.getName();
 		s = s.substring(0, s.lastIndexOf("."));

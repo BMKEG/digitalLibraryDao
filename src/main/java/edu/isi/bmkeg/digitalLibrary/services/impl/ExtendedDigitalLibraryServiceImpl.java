@@ -628,8 +628,8 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			LapdfVpdmfEngine lapdfEng = new LapdfVpdmfEngine();
 
-			File xmlFile = new File(wdPth + "/pdfs/" + ftd.getXmlFile());
-			File pmcXmlFile = new File(wdPth + "/pdfs/" + ftd.getPmcXmlFile());
+			File xmlFile = new File(wdPth + ftd.getXmlFile());
+			File pmcXmlFile = new File(wdPth + "/" +  ftd.getPmcXmlFile());
 			String xml = FileUtils.readFileToString(xmlFile, "UTF-8");
 
 			LapdfDocument document = lapdfEng.blockifyXml(xml);
@@ -803,8 +803,8 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			ftd.setPmcXmlFile(s.substring(0, s.length() - 4) + "_pmc.xml");
 			ftd.setPmcLoaded(true);
 
-			File xmlFile = new File(wdPth + "/pdfs/" + ftd.getXmlFile());
-			File pmcXmlFile = new File(wdPth + "/pdfs/" + ftd.getPmcXmlFile());
+			File xmlFile = new File(wdPth + "/" + ftd.getXmlFile());
+			File pmcXmlFile = new File(wdPth + "/" + ftd.getPmcXmlFile());
 
 			String xml = FileUtils.readFileToString(xmlFile, "UTF-8");
 
@@ -920,7 +920,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			FTD ftd = ftdDao.findArticleDocumentById(vpdmfId);
 
 			String wd = coreDao.getWorkingDirectory();
-			File laSwfFile = new File(wd + "/pdfs/" + ftd.getLaswfFile());
+			File laSwfFile = new File(wd + "/" + ftd.getLaswfFile());
 			byte[] laSwf = Converters.fileContentsToBytesArray(laSwfFile);
 
 			return laSwf;
@@ -958,7 +958,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			FTD ftd = ftdDao.findArticleDocumentById(vpdmfId);
 			
 			String wd = ftdDao.getCoreDao().getWorkingDirectory();
-			File xmlFile = new File( wd + "/pdfs/" + ftd.getXmlFile() );
+			File xmlFile = new File( wd + "/" + ftd.getXmlFile() );
 			
 			if( !xmlFile.exists() ) {
 				return null;
@@ -999,7 +999,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			FTD ftd = ftdDao.findArticleDocumentById(vpdmfId);
 			
 			String wd = ftdDao.getCoreDao().getWorkingDirectory();
-			File pmcXmlFile = new File( wd + "/pdfs/" +  ftd.getPmcXmlFile() );
+			File pmcXmlFile = new File( wd + "/" +  ftd.getPmcXmlFile() );
 			
 			if( !pmcXmlFile.exists() ) {
 				return null;
@@ -1040,7 +1040,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			FTD ftd = ftdDao.findArticleDocumentById(vpdmfId);
 			
 			String wd = ftdDao.getCoreDao().getWorkingDirectory();
-			File pmcXmlFile = new File( wd + "/pdfs/" +  ftd.getPmcXmlFile() );
+			File pmcXmlFile = new File( wd + "/" +  ftd.getPmcXmlFile() );
 			
 			if( !pmcXmlFile.exists() ) {
 				return null;
