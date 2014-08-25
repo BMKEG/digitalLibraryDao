@@ -3,10 +3,15 @@ package edu.isi.bmkeg.digitalLibrary.dao.impl;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,8 +20,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
@@ -26,12 +29,14 @@ import org.springframework.stereotype.Repository;
 import edu.isi.bmkeg.digitalLibrary.dao.ExtendedDigitalLibraryDao;
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
+import edu.isi.bmkeg.digitalLibrary.model.citations.ID;
 import edu.isi.bmkeg.digitalLibrary.model.citations.JournalEpoch;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ArticleCitation_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Corpus_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ID_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.JournalEpoch_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Journal_qo;
+import edu.isi.bmkeg.digitalLibrary.utils.elsevier.ElsevierApiKey;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.ftd.model.FTDRuleSet;
@@ -45,19 +50,17 @@ import edu.isi.bmkeg.utils.xml.XmlBindingTools;
 import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngine;
 import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngineImpl;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
-import edu.isi.bmkeg.vpdmf.model.definitions.PrimitiveDefinition;
 import edu.isi.bmkeg.vpdmf.model.definitions.PrimitiveLink;
 import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
 import edu.isi.bmkeg.vpdmf.model.definitions.ViewDefinition;
 import edu.isi.bmkeg.vpdmf.model.instances.AttributeInstance;
 import edu.isi.bmkeg.vpdmf.model.instances.ClassInstance;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
-import edu.isi.bmkeg.vpdmf.model.instances.PrimitiveInstance;
 import edu.isi.bmkeg.vpdmf.model.instances.ViewInstance;
 
 @Repository
 public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao {
-
+	
 	private static Logger logger = Logger
 			.getLogger(ExtendedDigitalLibraryDaoImpl.class);
 
@@ -276,11 +279,12 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 	// Add x to y functions
 	// ~~~~~~~~~~~~~~~~~~~~
 	@Override
-	public long addPdfToArticleCitation(LapdfDocument doc, ArticleCitation ac,
+	public long addFtdToArticleCitation(LapdfDocument doc, ArticleCitation ac,
 			File pdf) throws Exception {
 
 		FTD ftd = new FTD();
 		String wd = this.getCoreDao().getWorkingDirectory();
+		String apiKey = ElsevierApiKey.readApiKey(wd);
 
 		String dirPth = "pdfs/" + ac.getJournal().getAbbr() + "/"
 				+ ac.getPubYear() + "/" + ac.getVolValue();
@@ -307,15 +311,6 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		ftd.setName(pth);
 
 		String pthStem = pth.substring(0, pth.length() - 4);
-
-		/*
-		 * PmcXmlArticle pmcXml = doc.convertToPmcXmlFormat(); StringWriter
-		 * writer = new StringWriter(); XmlBindingTools.generateXML(pmcXml,
-		 * writer); String pmcXmlStr = writer.toString(); File pmcXmlFile = new
-		 * File( wd + "/" + pthStem + "_pmc.xml" );
-		 * FileUtils.writeStringToFile(pmcXmlFile, pmcXmlStr);
-		 * ftd.setPmcXmlFile(pthStem + "_pmc.xml");
-		 */
 
 		LapdftextXMLDocument xml = doc.convertToLapdftextXmlFormat();
 		File xmlFile = new File(wd + "/" + pthStem + "_lapdf.xml");
@@ -347,8 +342,179 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 			throw new Exception("Ambiguous data");
 		}
 
+		//
+		// Now here is where we look for the full-text version of the article 
+		// if it is available from PMC or ScienceDirect.
+		//
+		boolean ftdOk = false;
+		for( ID id : ac.getIds() ) {
+
+			if( id.getIdType().equals("pmc") ) {
+			
+				File f = new File(wd + "/" + pthStem + "_pmc.xml");
+				this.loadPmcFileToDisk(id.getIdValue(), f);
+			
+			} else if( id.getIdType().equals("pii") && !ftdOk ) {
+
+				File f1 = new File(wd + "/" + pthStem + "_els.xml");
+				File f2 = new File(wd + "/" + pthStem + "_els.html");
+				File f3 = new File(wd + "/" + pthStem + "_els.txt");
+				
+				ftdOk = this.loadElsevierXmlFileToDiskFromPii(id.getIdValue(), f1);
+				this.loadElsevierHtmlFileToDiskFromPii(id.getIdValue(), f2);
+				this.loadElsevierTextFileToDiskFromPii(id.getIdValue(), f3);
+
+			} else if( id.getIdType().equals("doi") && !ftdOk ) {
+
+				File f1 = new File(wd + "/" + pthStem + "_els.xml");
+				File f2 = new File(wd + "/" + pthStem + "_els.html");
+				File f3 = new File(wd + "/" + pthStem + "_els.txt");
+				
+				ftdOk = this.loadElsevierXmlFileToDiskFromDoi(id.getIdValue(), f1);
+				this.loadElsevierHtmlFileToDiskFromDoi(id.getIdValue(), f2);
+				this.loadElsevierTextFileToDiskFromDoi(id.getIdValue(), f3);
+	
+			}			
+
+			
+		}
+		
 		return adId;
 
+	}
+
+	public void loadPmcFileToDisk(String pmcid, File f) throws Exception {
+		String eFetchUrl = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=" + pmcid;
+		URL url = new URL(eFetchUrl);
+		URLConnection urlc = url.openConnection();							
+		this.loadUrlToDisk(urlc, f);
+	}
+	
+	public boolean loadElsevierXmlFileToDiskFromPii(String pii, File f) throws Exception {
+		
+		String wd = this.getCoreDao().getWorkingDirectory();
+		String apiKey = ElsevierApiKey.readApiKey(wd);
+		
+		if( apiKey == null )
+			return false;
+		
+		URL url = new URL("http://api.elsevier.com/content/article/PII:" + pii);
+		URLConnection urlc = url.openConnection();	
+		urlc.setRequestProperty("X-ELS-APIKey", apiKey);
+		urlc.setRequestProperty("Accept", "text/xml");
+		
+		return this.loadUrlToDisk(urlc, f);		
+		
+	}
+	
+	public boolean loadElsevierHtmlFileToDiskFromPii(String pii, File f) throws Exception {
+	
+		String wd = this.getCoreDao().getWorkingDirectory();
+		String apiKey = ElsevierApiKey.readApiKey(wd);
+		
+		if( apiKey == null )
+			return false;
+		
+		URL url = new URL("http://api.elsevier.com/content/article/PII:" + pii);
+		URLConnection urlc = url.openConnection();	
+		urlc.setRequestProperty("X-ELS-APIKey", apiKey);
+		urlc.setRequestProperty("Accept", "text/html");
+		
+		return this.loadUrlToDisk(urlc, f);		
+
+	}
+	
+	public boolean loadElsevierTextFileToDiskFromPii(String pii, File f) throws Exception {
+
+		String wd = this.getCoreDao().getWorkingDirectory();
+		String apiKey = ElsevierApiKey.readApiKey(wd);
+		
+		if( apiKey == null )
+			return false;
+		
+		URL url = new URL("http://api.elsevier.com/content/article/PII:" + pii);
+		URLConnection urlc = url.openConnection();	
+		urlc.setRequestProperty("X-ELS-APIKey", apiKey);
+		urlc.setRequestProperty("Accept", "text/plain");
+		
+		return this.loadUrlToDisk(urlc, f);		
+
+	}
+
+	public boolean loadElsevierXmlFileToDiskFromDoi(String doi, File f) throws Exception {
+		
+		String wd = this.getCoreDao().getWorkingDirectory();
+		String apiKey = ElsevierApiKey.readApiKey(wd);
+		
+		if( apiKey == null )
+			return false;
+		
+		URL url = new URL("http://api.elsevier.com/content/article/DOI:" + doi);
+		URLConnection urlc = url.openConnection();	
+		urlc.setRequestProperty("X-ELS-APIKey", apiKey);
+		urlc.setRequestProperty("Accept", "text/xml");
+		
+		return this.loadUrlToDisk(urlc, f);		
+		
+	}
+	
+	public boolean loadElsevierHtmlFileToDiskFromDoi(String doi, File f) throws Exception {
+	
+		String wd = this.getCoreDao().getWorkingDirectory();
+		String apiKey = ElsevierApiKey.readApiKey(wd);
+		
+		if( apiKey == null )
+			return false;
+		
+		URL url = new URL("http://api.elsevier.com/content/article/DOI:" + doi);
+		URLConnection urlc = url.openConnection();	
+		urlc.setRequestProperty("X-ELS-APIKey", apiKey);
+		urlc.setRequestProperty("Accept", "text/html");
+		
+		return this.loadUrlToDisk(urlc, f);		
+
+	}
+	
+	public boolean loadElsevierTextFileToDiskFromDoi(String doi, File f) throws Exception {
+
+		String wd = this.getCoreDao().getWorkingDirectory();
+		String apiKey = ElsevierApiKey.readApiKey(wd);
+		
+		if( apiKey == null )
+			return false;
+		
+		URL url = new URL("http://api.elsevier.com/content/article/DOI:" + doi);
+		URLConnection urlc = url.openConnection();	
+		urlc.setRequestProperty("X-ELS-APIKey", apiKey);
+		urlc.setRequestProperty("Accept", "text/plain");
+		
+		return this.loadUrlToDisk(urlc, f);		
+
+	}
+
+	private boolean loadUrlToDisk(URLConnection urlc, File f) throws Exception {
+				
+		try {
+			
+			InputStream inputStream = urlc.getInputStream();				
+			OutputStream outputStream = new FileOutputStream(f);
+	
+			int read = 0;
+			byte[] bytes = new byte[1024];
+			while ((read = inputStream.read(bytes)) != -1) {
+				outputStream.write(bytes, 0, read);
+			}
+			
+			return true;
+			
+		} catch (Exception e) {
+		
+			logger.warn("Could not load data from " + urlc.getURL().toString());
+		
+			return false;
+			
+		}
+		
 	}
 
 	public String addSwfToFtd(File pdf, FTD ftd) throws Exception, IOException {
@@ -375,7 +541,11 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		InputStreamReader inread = new InputStreamReader(buf);
 		BufferedReader bufferedreader = new BufferedReader(inread);
 		String line, out = "";
-		while ((line = bufferedreader.readLine()) != null) {
+		
+		/* 
+		 * TODO: This section hung without exiting, need to check and fix.
+		 */ 
+		 while ((line = bufferedreader.readLine()) != null) {
 			out += line + "\n";
 		}
 		// Check for maven failure
@@ -394,7 +564,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		}
 
 		if (!swfFile.exists()) {
-			throw new Exception("pdf2swf-based swf generation failed: " + out);
+			throw new Exception("pdf2swf-based swf generation failed: " + pdf.getPath());
 		}
 
 		String pth = swfFile.getPath();
@@ -811,20 +981,8 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 			int out = ce.executeRawUpdateQuery(sql);
 
 			LightViewInstance lvi = lLvi.get(0);
-			String[] idxTup = lvi.getIndexTuple().split("\\{\\|\\}");
-			String[] idxTupFields = lvi.getIndexTupleFields()
-					.split("\\{\\|\\}");
-			int countBlocks = -1;
-			for (int i = 0; i < idxTupFields.length; i++) {
-				if (idxTupFields[i].equals("FTDFragment_4")) {
-					String[] xvalues = idxTup[i].split(",");
-					countBlocks = xvalues.length;
-					break;
-				}
-			}
 
-			if (countBlocks == 1) {
-
+			try {
 				sql = "DELETE frg.* " + "FROM FTDFragment AS frg "
 						+ "WHERE frg.vpdmfId = " + lvi.getVpdmfId() + ";";
 
@@ -835,8 +993,18 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 				int out3 = ce.executeRawUpdateQuery(sql);
 
-			}
+			} catch (Exception e) {
 
+				//
+				// Still some blocks left, update the index.
+				//
+				ViewInstance vi = ce.executeUIDQuery("FTDFragment", lvi.getVpdmfId());
+				ce.initGarbageCollector(vi);
+				vi.updateIndexes();			
+				ce.executeUpdateQuery(vi);
+				
+			} 
+			
 			ce.commitTransaction();
 
 		} catch (Exception e) {

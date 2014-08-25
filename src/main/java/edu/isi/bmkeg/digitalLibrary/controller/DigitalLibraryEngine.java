@@ -19,9 +19,6 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import com.google.common.io.Files;
-
-import edu.isi.bmkeg.digitalLibrary.controller.medline.VpdmfMedlineHandler;
 import edu.isi.bmkeg.digitalLibrary.dao.DigitalLibraryDao;
 import edu.isi.bmkeg.digitalLibrary.dao.ExtendedDigitalLibraryDao;
 import edu.isi.bmkeg.digitalLibrary.dao.impl.DigitalLibraryDaoImpl;
@@ -38,6 +35,7 @@ import edu.isi.bmkeg.digitalLibrary.utils.FileLookupPersistentObject;
 import edu.isi.bmkeg.digitalLibrary.utils.JournalLookupPersistentObject;
 import edu.isi.bmkeg.digitalLibrary.utils.pubmed.BuildCitationFromMedlineMetaData;
 import edu.isi.bmkeg.digitalLibrary.utils.pubmed.EFetcher;
+import edu.isi.bmkeg.digitalLibrary.utils.pubmed.VpdmfMedlineHandler;
 import edu.isi.bmkeg.ftd.dao.FtdDao;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDRuleSet;
@@ -46,6 +44,8 @@ import edu.isi.bmkeg.lapdf.controller.LapdfVpdmfEngine;
 import edu.isi.bmkeg.lapdf.dao.vpdmf.LAPDFTextDaoImpl;
 import edu.isi.bmkeg.lapdf.extraction.exceptions.EncryptionException;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
+import edu.isi.bmkeg.terminology.model.Term;
+import edu.isi.bmkeg.terminology.model.qo.Ontology_qo;
 import edu.isi.bmkeg.utils.Converters;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
@@ -247,7 +247,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 						this.classifyDocument(doc, ruleFile);
 					} 
 					
-					this.extDigLibDao.addPdfToArticleCitation(doc, ac, pdf);
+					this.extDigLibDao.addFtdToArticleCitation(doc, ac, pdf);
 
 					pmidLookup.put(ac.getPmid(), ac.getVpdmfId());
 
@@ -277,7 +277,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 				this.classifyDocument(doc, ruleFile);
 			} 
 			
-			this.extDigLibDao.addPdfToArticleCitation(doc, ac, pdfOrDir);
+			this.extDigLibDao.addFtdToArticleCitation(doc, ac, pdfOrDir);
 
 			pmidLookup.put(ac.getPmid(), ac.getVpdmfId());
 
@@ -465,16 +465,7 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			
 			LapdfDocument doc = this.blockifyFile(pdf);
 			
-			/*TODO: Remove this and put it elsewhere in an explicit classsfy blocks step.
-			 * FTDRuleSet rs = null;
-			JournalEpoch je = this.extDigLibDao.retriveJournalEpochForCitation(ac);
-			if( je != null && je.getRules() != null) {
-				rs = je.getRules();	
-			} else {
-				rs = this.extDigLibDao.readRuleFileFromDisk(this.getRuleFile());	
-			}*/
-			
-			this.extDigLibDao.addPdfToArticleCitation(doc, ac, pdf);
+			this.extDigLibDao.addFtdToArticleCitation(doc, ac, pdf);
 		
 		} else if( ftd.getLaswfFile() == null ){
 		
@@ -870,6 +861,70 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			
 		}
 
+	}
+	
+	public void instantiateFragmentTypeTerms() throws Exception {
+		
+		CoreDao coreDao = this.extDigLibDao.getCoreDao();
+		
+		coreDao.init();
+		
+		Ontology_qo qOnt = new Ontology_qo();
+		qOnt.setShortName("bmkegFragmentTypes");		
+		List<LightViewInstance> l = coreDao.list(qOnt, "Ontology");
+		
+		if( l.size() == 0 ) {
+
+			String ns = "http://bmkeg.isi.edu/fragmentTypes/";
+			
+			edu.isi.bmkeg.terminology.model.Ontology ont = 
+					new edu.isi.bmkeg.terminology.model.Ontology();
+			ont.setFullName("BMKEG Fragment Types");
+			ont.setDisplayName("BMKEG Fragment Types");
+			ont.setDescription("Types of fragments to be used within the BMKEG group");
+			ont.setNs(ns);
+			ont.setShortName("bmkegFragmentTypes");
+			coreDao.insert(ont, "Ontology");
+
+			Term t1 = new Term();
+			t1.setFullTermURI(ns + "/introFragment");
+			t1.setNamespace(ns);
+			t1.setOntology(ont);
+			t1.setShortTermId("introFragment");
+			t1.setTermType("Fragment Type");
+			t1.setTermValue("Introduction Fragment");
+			coreDao.insert(t1, "Term");
+			
+			Term t2 = new Term();
+			t2.setFullTermURI(ns + "/introFragment");
+			t2.setNamespace(ns);
+			t2.setOntology(ont);
+			t2.setShortTermId("resultFragment");
+			t2.setTermType("Fragment Type");
+			t2.setTermValue("Result Fragment");
+			coreDao.insert(t2, "Term");
+			
+			Term t3 = new Term();
+			t3.setFullTermURI(ns + "/introFragment");
+			t3.setNamespace(ns);
+			t3.setOntology(ont);
+			t3.setShortTermId("interpretFragment");
+			t3.setTermType("Fragment Type");
+			t3.setTermValue("Interpretation Fragments");
+			coreDao.insert(t3, "Term");
+			
+			Term t4 = new Term();
+			t4.setFullTermURI(ns + "/introFragment");
+			t4.setNamespace(ns);
+			t4.setOntology(ont);
+			t4.setShortTermId("discussFragment");
+			t4.setTermType("Fragment Type");
+			t4.setTermValue("Discussion Fragments");
+			coreDao.insert(t4, "Term");
+			
+		}
+		
+		
 	}
 	
 }

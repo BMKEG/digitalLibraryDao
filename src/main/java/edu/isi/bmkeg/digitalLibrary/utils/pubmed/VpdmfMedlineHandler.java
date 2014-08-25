@@ -1,4 +1,4 @@
-package edu.isi.bmkeg.digitalLibrary.controller.medline;
+package edu.isi.bmkeg.digitalLibrary.utils.pubmed;
 
 import java.io.BufferedReader;
 import java.io.File;

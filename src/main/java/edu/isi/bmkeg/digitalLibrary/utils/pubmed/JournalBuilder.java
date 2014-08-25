@@ -89,11 +89,11 @@ public class JournalBuilder
 		
 		FileWriter vtfw = new FileWriter(vtf.getAbsoluteFile());
 		BufferedWriter vtbw = new BufferedWriter(vtfw);
-		vtbw.write("bmkegId	viewType	locked	vpdmfLabel	namespace	thumbnail\n");
+		vtbw.write("vpdmfId	viewType	locked	vpdmfLabel	vpdmfUri	namespace	thumbnail	indexTuple\n");
 		
 		FileWriter jfw = new FileWriter(jf.getAbsoluteFile());
 		BufferedWriter jbw = new BufferedWriter(jfw);
-		jbw.write("bmkegId	journalTitle	nlmId	abbr	ISSN\n");
+		jbw.write("vpdmfId	journalTitle	nlmId	abbr	ISSN\n");
 		
 		Iterator<Journal> jIt = jList.iterator();
 		int i = 0;
@@ -110,7 +110,7 @@ public class JournalBuilder
 			if( j.getISSN() == null || j.getISSN().length() == 0)
 				j.setISSN("XXXX-XXXX");
 						
-			String s1 = i + "\t" + j.getViewType() + "\t\\N\t" + j.getAbbr() + ".\t\\N\t\\N";
+			String s1 = i + "\t" + j.getViewType() + "\t\\N\t" + j.getAbbr() + ".\t\\N\t\\N\t\\N\t" + j.getAbbr() + ".";
 			vtbw.write( s1.replaceAll("\n", "") + "\n" );
 			String s2 = i + "\t" + j.getJournalTitle() + "\t" + j.getNlmId() + "\t" + j.getAbbr() + "\t" + j.getISSN();
 			jbw.write( s2.replaceAll("\n", "") + "\n" );

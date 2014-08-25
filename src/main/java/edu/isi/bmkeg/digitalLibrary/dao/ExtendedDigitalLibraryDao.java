@@ -70,8 +70,10 @@ public interface ExtendedDigitalLibraryDao {
 	public void addArticlesToCorpus(List<Integer> keySet, String corpusName) throws Exception;
 	
 	public void addArticlesToCorpusInTrans(List<Integer> pmids, String corpusName) throws Exception;
+
+	//public long addFtdToArticleCitation(ArticleCitation ac) throws Exception;
 	
-	public long addPdfToArticleCitation(LapdfDocument doc, 
+	public long addFtdToArticleCitation(LapdfDocument doc, 
 			ArticleCitation ac, 
 			File pdf) throws Exception;
 	

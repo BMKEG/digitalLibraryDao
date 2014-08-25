@@ -10,9 +10,9 @@ import org.kohsuke.args4j.Option;
 
 import edu.isi.bmkeg.digitalLibrary.bin.BuildDigitalLibraryDatabase.Options;
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
-import edu.isi.bmkeg.digitalLibrary.controller.medline.VpdmfMedlineHandler;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.digitalLibrary.utils.JournalLookupPersistentObject;
+import edu.isi.bmkeg.digitalLibrary.utils.pubmed.VpdmfMedlineHandler;
 
 public class ImportMedlineDirectory {
 

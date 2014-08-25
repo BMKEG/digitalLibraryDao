@@ -32,9 +32,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.flex.remoting.RemotingDestination;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,19 +51,20 @@ import edu.isi.bmkeg.ftd.dao.impl.FtdDaoImpl;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.ftd.model.FTDRuleSet;
+import edu.isi.bmkeg.ftd.model.qo.FTDFragment_qo;
 import edu.isi.bmkeg.ftd.model.qo.FTD_qo;
-import edu.isi.bmkeg.lapdf.controller.LapdfEngine;
 import edu.isi.bmkeg.lapdf.controller.LapdfVpdmfEngine;
 import edu.isi.bmkeg.lapdf.dao.vpdmf.LAPDFTextDaoImpl;
 import edu.isi.bmkeg.lapdf.extraction.exceptions.ClassificationException;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
 import edu.isi.bmkeg.lapdf.pmcXml.PmcXmlArticle;
 import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
+import edu.isi.bmkeg.terminology.model.qo.Ontology_qo;
+import edu.isi.bmkeg.terminology.model.qo.Term_qo;
 import edu.isi.bmkeg.utils.Converters;
 import edu.isi.bmkeg.utils.xml.XmlBindingTools;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
-import edu.isi.bmkeg.vpdmf.model.definitions.ViewDefinition;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 import edu.isi.bmkeg.vpdmf.model.instances.ViewBasedObjectGraph;
 import edu.isi.bmkeg.vpdmf.model.instances.ViewInstance;
@@ -110,7 +108,9 @@ public class ExtendedDigitalLibraryServiceImpl implements
 					.fileContentsToBytesArray(jLookupFile);
 			Object jLookupPObj = Converters.byteArrayToObject(jLookupBytes);
 			de.setjLookup((Map<String, Journal>) jLookupPObj);
-
+			
+			de.instantiateFragmentTypeTerms();
+			
 		}
 
 	}
@@ -151,19 +151,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 
 			LapdfDocument doc = de.blockifyFile(pdfFile);
 
-			/*
-			 * FTDRuleSet rs = null; JournalEpoch je =
-			 * this.extDigLibDao.retriveJournalEpochForCitation(ac); if( je !=
-			 * null && je.getRules() != null) { rs = je.getRules(); File
-			 * tempRuleFile = new File(workDir.getPath()+ "/" +
-			 * rs.getFileName()); this.extDigLibDao.dumpRuleFileToDisk(rs,
-			 * tempRuleFile); de.setRuleFile(tempRuleFile); } else { rs =
-			 * this.extDigLibDao.readRuleFileFromDisk(de.getRuleFile()); }
-			 * 
-			 * de.classifyDocument(doc, de.getRuleFile());
-			 */
-
-			de.getExtDigLibDao().addPdfToArticleCitation(doc, ac, pdfFile);
+			de.getExtDigLibDao().addFtdToArticleCitation(doc, ac, pdfFile);
 
 			this.extDigLibDao.getCoreDao().getCe().commitTransaction();
 
@@ -195,7 +183,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		VPDMf top = this.extDigLibDao.getCoreDao().getTop();
 		List<String> termTrees = new ArrayList<String>();
 
-		Iterator<ViewDefinition> vdIt = top.getViews().values().iterator();
+		/*Iterator<ViewDefinition> vdIt = top.getViews().values().iterator();
 		while (vdIt.hasNext()) {
 			ViewDefinition vd = vdIt.next();
 
@@ -213,9 +201,22 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			if (termFlag)
 				termTrees.add(addr);
 
-		}
+		}*/
 
+		Ontology_qo qOnt = new Ontology_qo();
+		qOnt.setShortName("bmkegFragmentTypes");		
+		Term_qo qT = new Term_qo();
+		qT.setOntology(qOnt);
+		
+		List<LightViewInstance> l = this.extDigLibDao.getCoreDao().list(qOnt, "Term");
+		for( LightViewInstance lvi : l) {
+			Map<String,String> map = lvi.readIndexTupleMap(top);
+			termTrees.add(map.get("[Term]Term|Term.termValue"));
+		}
+		
 		return termTrees;
+		
+		
 
 	}
 
@@ -1064,6 +1065,133 @@ public class ExtendedDigitalLibraryServiceImpl implements
 
 		return html;
 
+	}
+
+	/**
+	 * An extended version of the simple article citation service but with the 
+	 * added bonus of tracking which papers are available in what format on disk.
+	 */
+	@Override
+	public List<LightViewInstance> listArticleCitationPaged(
+			ArticleCitation_qo o, int offset, int cnt) throws Exception {
+
+		init();
+		String wd = this.extDigLibDao.getCoreDao().getWorkingDirectory();
+		
+		List<LightViewInstance> data = this.de.getDigLibDao().listArticleCitationPaged(o, offset, cnt);
+		
+		for( LightViewInstance lvi : data ) {
+			String[] indexTuple = lvi.getIndexTuple().split("\\{\\|\\}");
+
+			String journal = indexTuple[5];
+			String year = indexTuple[3];
+			String volume = indexTuple[6];
+			String pmid = indexTuple[8];
+			
+			journal = journal.replaceAll("\\s+", "_");
+			volume = volume.replaceAll("\\s+", "_");
+			
+			File pdf = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".pdf");
+			File swf = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".swf");
+			File lapdf = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_lapdf.xml");
+			File xml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_pmc.xml");
+			File html = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".html");
+			File elsXml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.xml");
+			File elsHtml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.html");
+			//File elsTxt = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.txt");
+			
+			String s = LightViewInstance.INDEX_TUPLE_SEPARATOR; 
+			String newFields = lvi.getIndexTupleFields() + s + 
+					"pdfExists" + s +  
+					"xmlExists" + s + 
+					"htmlExists"; 
+			lvi.setIndexTupleFields(newFields);
+			
+			String newIndex = lvi.getIndexTuple() + s + 
+					(pdf.exists() && swf.exists() && lapdf.exists()) + s + 
+					(xml.exists() || elsXml.exists()) + s + 
+					(html.exists() || elsHtml.exists());
+			
+			lvi.setIndexTuple(newIndex);
+			
+		}
+		
+		return data;
+
+	}
+
+	@Override
+	public String dumpFragmentsToBrat(long ftdId) throws Exception {
+
+		init();
+		String wd = this.extDigLibDao.getCoreDao().getWorkingDirectory();
+		VPDMf top = this.extDigLibDao.getCoreDao().getTop();
+
+		File brat = Converters.readAppDirectory("bratData", new File(wd));
+		File bratData = new File(brat.getPath() + "/data");
+		
+		if( !bratData.exists() )
+			throw new Exception("Brat is not set up, please set up pointer " +
+					"to bratData in webapp.properties");
+		
+		CoreDao coreDao = this.extDigLibDao.getCoreDao();
+		
+		FTD_qo ftd = new FTD_qo();
+		ftd.setVpdmfId(String.valueOf(ftdId));
+		LiteratureCitation_qo lc = new LiteratureCitation_qo();
+		lc.setFullText(ftd);
+		List<LightViewInstance> l = coreDao.list(lc, "ArticleCitationDocument");
+		
+		if( l.size() != 1 ) 
+			throw new Exception("Can't find Full Text Document with id=" + ftdId);
+		
+		Map<String,String> idxMap = l.get(0).readIndexTupleMap(top);
+		String authorString = idxMap.get("[ArticleCitation]Author|Person.surname");	
+		String[] authorArray = authorString.split(LightViewInstance.INDEX_TUPLE_FIELD_SEPARATOR); 
+		if( authorArray.length == 1 ) {
+			authorArray = authorString.split(","); 
+		}
+		String author = authorArray[0];
+		String year = idxMap.get("[ArticleCitation]LiteratureCitation|LiteratureCitation.pubYear");	
+		String volume = idxMap.get("[ArticleCitation]LiteratureCitation|ArticleCitation.volume");	
+		String pages = idxMap.get("[ArticleCitation]LiteratureCitation|LiteratureCitation.pages");
+		String stem = author + "_" + year + "_" + volume + "_" + pages;
+			
+		FTDFragment_qo qFrg = new FTDFragment_qo();
+		ftd = new FTD_qo();
+		qFrg.setFtd(ftd);
+		ftd.setVpdmfId(String.valueOf(ftdId));
+		l = coreDao.list(qFrg, "FTDFragment");
+			
+		File frgDir = new File(bratData.getPath() + "/" + stem);
+		frgDir.mkdir();
+		
+
+		for( int i=0; i<l.size(); i++ ) {
+			LightViewInstance lvi = l.get(i);
+			
+			Map<String,String> idxMap2 = lvi.readIndexTupleMap(top);
+			String frgType = idxMap2.get("[FTDFragment]FTDFragment|FTDFragment.frgType");
+			if( frgType != null  && frgType.length() > 0 )
+				frgType = frgType.replaceAll("\\s+", "_") + "/";
+			else 
+				frgType = "";
+
+			File frgFile = new File(bratData.getPath()+"/"+stem+"/"+frgType+stem+"_frg"+(i+1)+".txt");
+			File annFile = new File(bratData.getPath()+"/"+stem+"/"+frgType+stem+"_frg"+(i+1)+".ann");
+			
+			String frgText = lvi.getVpdmfLabel();
+			int pos = frgText.indexOf("[");
+			frgText = frgText.substring(pos+1,frgText.length()-1);
+			frgText = frgText.replaceAll("\\s+", " ");
+			
+			FileUtils.writeStringToFile(frgFile, frgText);
+			FileUtils.writeStringToFile(annFile, "");
+			
+		}
+		
+		return stem;
+			
 	}
 
 

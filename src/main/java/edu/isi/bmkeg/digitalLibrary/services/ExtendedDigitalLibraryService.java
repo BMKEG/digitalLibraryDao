@@ -3,6 +3,7 @@ package edu.isi.bmkeg.digitalLibrary.services;
 import java.util.List;
 
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ArticleCitation_qo;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.ftd.model.FTDRuleSet;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
@@ -49,5 +50,8 @@ public interface ExtendedDigitalLibraryService {
 	
 	String loadHtml(Long vpdmfId) throws Exception;
 	
-	
+	List<LightViewInstance> listArticleCitationPaged(ArticleCitation_qo o, int offset, int cnt) throws Exception;
+
+	String dumpFragmentsToBrat(long ftdId) throws Exception;
+
 }

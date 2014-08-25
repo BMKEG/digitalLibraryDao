@@ -22,6 +22,7 @@ class EfetchHandler extends DefaultHandler {
 	boolean error = false;
 
 	private ArrayList<ArticleCitation> articles = new ArrayList<ArticleCitation>();
+	private Author nobody = new Author();
 	int authorCount = 0;
 	int urlCount = 0;
 	int idCount = 0;
@@ -37,8 +38,19 @@ class EfetchHandler extends DefaultHandler {
 
 	public void startDocument() {
 		articles = new ArrayList<ArticleCitation>();
+		nobody.setSurname("-");
+		nobody.setInitials("-");
+		nobody.setEmail("-");
 	}
 
+	public void endDocument() {
+		for (ArticleCitation a : this.articles) {
+			if(a.getAuthorList() != null && a.getAuthorList().size() == 0 ) {
+				a.getAuthorList().add(nobody);
+			}
+		}
+	}
+	
 	public void startElement(String uri, String localName, String qName,
 			Attributes attributes) {
 
