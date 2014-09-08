@@ -2,6 +2,8 @@ package edu.isi.bmkeg.digitalLibrary.services;
 
 import java.util.List;
 
+import org.w3c.dom.Document;
+
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ArticleCitation_qo;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
@@ -53,5 +55,8 @@ public interface ExtendedDigitalLibraryService {
 	List<LightViewInstance> listArticleCitationPaged(ArticleCitation_qo o, int offset, int cnt) throws Exception;
 
 	String dumpFragmentsToBrat(long ftdId) throws Exception;
+	
+	Document retrieveFragmentTree() throws Exception;
+
 
 }

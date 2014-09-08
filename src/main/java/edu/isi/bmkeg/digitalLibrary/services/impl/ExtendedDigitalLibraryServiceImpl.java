@@ -19,6 +19,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
@@ -34,6 +36,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.flex.remoting.RemotingDestination;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.Comment;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
 import edu.isi.bmkeg.digitalLibrary.dao.ExtendedDigitalLibraryDao;
@@ -108,9 +113,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 					.fileContentsToBytesArray(jLookupFile);
 			Object jLookupPObj = Converters.byteArrayToObject(jLookupBytes);
 			de.setjLookup((Map<String, Journal>) jLookupPObj);
-			
-			de.instantiateFragmentTypeTerms();
-			
+						
 		}
 
 	}
@@ -1193,7 +1196,136 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		return stem;
 			
 	}
+	
+	@Override
+	public Document retrieveFragmentTree() 
+			throws Exception {
+		
+		init();
+		
+		CoreDao coreDao = this.extDigLibDao.getCoreDao();
+		coreDao.connectToDb();
+		
+		String sql = "select j.vpdmfId, j.abbr, " + 
+				" lc.vpdmfId, lc.pubYear, ac.volume, lc.pages, vt.vpdmfLabel, " +
+				" frg.vpdmfId, frg.frgOrder, b.vpdmfId, b.vpdmfOrder, b.text " +
+				"from " + 
+				"FTDFragment as frg, " +
+				"FTDFragmentBlock as b, " +
+				"FTD as ftd, " +
+				"Journal as j, " + 
+				"ViewTable as vt, " +
+				"literaturecitation as lc, " +
+				"ArticleCitation as ac " +
+				"where " +
+				"frg.ftd_id = ftd.vpdmfId AND " +
+				"lc.fullText_id = ftd.vpdmfId AND " +
+				"lc.vpdmfId = vt.vpdmfId AND " +
+				"lc.vpdmfId = ac.vpdmfId AND " +
+				"b.fragment_id = frg.vpdmfId AND " +
+				"b.vpdmfOrder = 0 AND " +
+				"ac.journal_id = j.vpdmfId " +
+				"ORDER BY j.abbr, lc.pubYear, ac.volume, lc.pages, frg.frgOrder, b.vpdmfOrder";
 
+		ResultSet rs = coreDao.getCe().executeRawSqlQuery(sql);
+		
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = dbf.newDocumentBuilder();
+		Document doc = builder.newDocument();
+		
+		// create the root element node
+		Element root = doc.createElement("root");
+		doc.appendChild(root);
+				
+		Map<String, Element> jLookup = new HashMap<String, Element>(); 
+		Map<String, Element> yLookup = new HashMap<String, Element>(); 
+		Map<String, Element> vLookup = new HashMap<String, Element>(); 
+		Map<String, Element> pLookup = new HashMap<String, Element>(); 
+		Map<String, Element> fLookup = new HashMap<String, Element>(); 
+		
+		while( rs.next() ) {
+
+			String j = rs.getString("j.abbr");
+			Long jId = rs.getLong("j.vpdmfId");
+			String y = rs.getString("lc.pubYear");
+			String v = rs.getString("ac.volume");
+			String pg = rs.getString("lc.pages");
+			
+			String cit = rs.getString("vt.vpdmfLabel");
+			int commaLen = cit.indexOf(",");
+			int bracketLen = cit.indexOf("(");
+			if( commaLen > bracketLen )
+				cit = cit.substring(0, bracketLen); 
+			else 
+				cit = cit.substring(0, commaLen) + " et al."; 
+			cit += "(" + y + ") p: " + pg; 
+			
+			Long citId = rs.getLong("lc.vpdmfId");
+			String f = rs.getString("frg.frgOrder");
+			Long frgId = rs.getLong("frg.vpdmfId");
+			int b = rs.getInt("b.vpdmfOrder");
+			Long bId = rs.getLong("b.vpdmfId");
+			String t = rs.getString("b.text");
+
+			Element jEl = doc.createElement("node");
+			jEl.setAttribute("label", j);
+			jEl.setAttribute("data", jId + "");
+			jEl.setAttribute("type", "journal");
+			if( jLookup.containsKey(j)) {
+				jEl = jLookup.get(j);
+			} else {
+				jLookup.put(j,jEl);
+				root.appendChild(jEl);
+			}
+			
+			Element yEl = doc.createElement("node");
+			yEl.setAttribute("label", y);
+			yEl.setAttribute("type", "year");
+			if( yLookup.containsKey(j + "_" + y)) {
+				yEl = yLookup.get(j + "_" + y);
+			} else {
+				yLookup.put(j + "_" + y,yEl);
+				jEl.appendChild(yEl);
+			}
+
+			Element vEl = doc.createElement("node");
+			vEl.setAttribute("label", v);
+			vEl.setAttribute("type", "volume");
+			if( vLookup.containsKey(j + "_" + y + "_" + v)) {
+				vEl = vLookup.get(j + "_" + y + "_" + v);
+			} else {
+				vLookup.put(j + "_" + y + "_" + v, vEl);
+				yEl.appendChild(vEl);
+			}
+
+			Element citEl = doc.createElement("node");
+			citEl.setAttribute("label", cit);
+			citEl.setAttribute("data", citId + "");
+			citEl.setAttribute("type", "citation");
+			if( pLookup.containsKey(cit)) {
+				citEl = pLookup.get(cit);
+			} else {
+				pLookup.put(cit, citEl);
+				vEl.appendChild(citEl);
+			}
+
+			Element frgEl = doc.createElement("node");
+			frgEl.setAttribute("label", f + ": " + t);
+			frgEl.setAttribute("data", frgId + "");
+			frgEl.setAttribute("type", "fragment");
+			if( pLookup.containsKey(cit + "__" + f)) {
+				frgEl = pLookup.get(cit + "__" + f);
+			} else {
+				pLookup.put(cit + "__" + f, frgEl);
+				citEl.appendChild(frgEl);
+			}
+						
+		}
+		rs.close();
+		
+		return doc;
+		
+	}
 
 	
 }
