@@ -56,7 +56,8 @@ public interface ExtendedDigitalLibraryService {
 
 	String dumpFragmentsToBrat(long ftdId) throws Exception;
 	
-	Document retrieveFragmentTree() throws Exception;
+	Document retrieveFragmentTree(Long vpdmfId) throws Exception;
 
+	String packageCorpusArchive(Long corpusId) throws Exception;
 
 }

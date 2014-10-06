@@ -283,6 +283,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 			File pdf) throws Exception {
 
 		FTD ftd = new FTD();
+		ChangeEngine ce = this.getCoreDao().getCe();
 		String wd = this.getCoreDao().getWorkingDirectory();
 		String apiKey = ElsevierApiKey.readApiKey(wd);
 
@@ -346,7 +347,9 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		// Now here is where we look for the full-text version of the article 
 		// if it is available from PMC or ScienceDirect.
 		//
-		boolean ftdOk = false;
+		/* TODO: BUG -  This section never seems find the right pieces. 
+		 * 				Need to examine more closely...
+		 * boolean ftdOk = false;
 		for( ID id : ac.getIds() ) {
 
 			if( id.getIdType().equals("pmc") ) {
@@ -354,7 +357,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 				File f = new File(wd + "/" + pthStem + "_pmc.xml");
 				this.loadPmcFileToDisk(id.getIdValue(), f);
 			
-			} else if( id.getIdType().equals("pii") && !ftdOk ) {
+			}( else if( id.getIdType().equals("pii") && !ftdOk ) {
 
 				File f1 = new File(wd + "/" + pthStem + "_els.xml");
 				File f2 = new File(wd + "/" + pthStem + "_els.html");
@@ -374,10 +377,9 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 				this.loadElsevierHtmlFileToDiskFromDoi(id.getIdValue(), f2);
 				this.loadElsevierTextFileToDiskFromDoi(id.getIdValue(), f3);
 	
-			}			
+			}
 
-			
-		}
+		}*/
 		
 		return adId;
 
@@ -586,14 +588,6 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		int count = 0;
 
 		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
-		VPDMf top = ce.readTop();
-		ViewDefinition vd = top.getViews().get("ArticleCorpus");
-
-		ViewInstance vi = new ViewInstance(vd);
-
-		PrimitiveLink pl = (PrimitiveLink) vd.getSubGraph().getEdges()
-				.iterator().next();
-		UMLclass link = pl.getRole().getAss().getLinkClass();
 
 		// We are going to write the data that we want to insert into the
 		// database into
@@ -604,29 +598,8 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 		try {
 
-			Collections.sort(articleIds);
-			Iterator<Long> articleIt = articleIds.iterator();
-			while (articleIt.hasNext()) {
-				Long articleId = articleIt.next();
-
-				ClassInstance linkCi = new ClassInstance(link);
-
-				AttributeInstance corpusIdAi = linkCi.getAttributes().get(
-						"corpora_id");
-				corpusIdAi.setValue(corpusId);
-
-				AttributeInstance articleIdAi = linkCi.getAttributes().get(
-						"resources_id");
-				articleIdAi.setValue(articleId);
-
-				List<ClassInstance> l = ce.queryClass(linkCi);
-				if (l.size() == 0) {
-					ce.insertObjectIntoDB(linkCi);
-					count++;
-				}
-
-			}
-
+			count = this.addArticlesToCorpusWithIdsInTrans(articleIds, corpusId);
+			
 			ce.clearQuery();
 			ce.commitTransaction();
 
@@ -637,6 +610,52 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		} finally {
 
 			this.coreDao.getCe().closeDbConnection();
+
+		}
+
+		return count;
+
+	}
+	
+	@Override
+	/**
+	 * Low level optimized SQL command to add articles to a given corpus.
+	 */
+	public int addArticlesToCorpusWithIdsInTrans(List<Long> articleIds, long corpusId)
+			throws Exception {
+
+		int count = 0;
+
+		ChangeEngineImpl ce = (ChangeEngineImpl) this.coreDao.getCe();
+		VPDMf top = ce.readTop();
+		ViewDefinition vd = top.getViews().get("ArticleCorpus");
+
+		ViewInstance vi = new ViewInstance(vd);
+
+		PrimitiveLink pl = (PrimitiveLink) vd.getSubGraph().getEdges()
+				.iterator().next();
+		UMLclass link = pl.getRole().getAss().getLinkClass();
+
+		Collections.sort(articleIds);
+		Iterator<Long> articleIt = articleIds.iterator();
+		while (articleIt.hasNext()) {
+			Long articleId = articleIt.next();
+
+			ClassInstance linkCi = new ClassInstance(link);
+
+			AttributeInstance corpusIdAi = linkCi.getAttributes().get(
+					"corpora_id");
+			corpusIdAi.setValue(corpusId);
+
+			AttributeInstance articleIdAi = linkCi.getAttributes().get(
+					"resources_id");
+			articleIdAi.setValue(articleId);
+
+			List<ClassInstance> l = ce.queryClass(linkCi);
+			if (l.size() == 0) {
+				ce.insertObjectIntoDB(linkCi);
+				count++;
+			}
 
 		}
 

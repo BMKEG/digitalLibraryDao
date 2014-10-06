@@ -1,14 +1,18 @@
 package edu.isi.bmkeg.digitalLibrary.services.impl;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URL;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,6 +21,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilder;
@@ -36,17 +42,20 @@ import org.springframework.core.io.Resource;
 import org.springframework.flex.remoting.RemotingDestination;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.google.common.io.Files;
 
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
 import edu.isi.bmkeg.digitalLibrary.dao.ExtendedDigitalLibraryDao;
 import edu.isi.bmkeg.digitalLibrary.dao.impl.DigitalLibraryDaoImpl;
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
+import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 import edu.isi.bmkeg.digitalLibrary.model.citations.JournalEpoch;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ArticleCitation_qo;
+import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Corpus_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.JournalEpoch_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Journal_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.LiteratureCitation_qo;
@@ -68,6 +77,7 @@ import edu.isi.bmkeg.terminology.model.qo.Ontology_qo;
 import edu.isi.bmkeg.terminology.model.qo.Term_qo;
 import edu.isi.bmkeg.utils.Converters;
 import edu.isi.bmkeg.utils.xml.XmlBindingTools;
+import edu.isi.bmkeg.vpdmf.controller.queryEngineTools.ChangeEngine;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.definitions.VPDMf;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
@@ -118,8 +128,10 @@ public class ExtendedDigitalLibraryServiceImpl implements
 
 	}
 
-	public ArticleCitation addPmidEncodedPdfToCorpus(byte[] pdfFileData,
-			String fileName, String corpusName) throws Exception {
+	public ArticleCitation addPmidEncodedPdfToCorpus(
+			byte[] pdfFileData,
+			String fileName, 
+			String corpusName) throws Exception {
 
 		init();
 
@@ -130,8 +142,9 @@ public class ExtendedDigitalLibraryServiceImpl implements
 
 		try {
 
-			this.extDigLibDao.getCoreDao().getCe().connectToDB();
-			this.extDigLibDao.getCoreDao().getCe().turnOffAutoCommit();
+			ChangeEngine ce = this.extDigLibDao.getCoreDao().getCe();
+			ce.connectToDB();
+			ce.turnOffAutoCommit();
 
 			ac = de.insertCodedPdfFileName(fileName, "pmid");
 			String pth = "pdfs/" + ac.getJournal().getAbbr() + "/"
@@ -146,7 +159,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 								+ workDir + " writable?");
 			}
 
-			File pdfFile = new File(pdfDir.getPath() + "/" + fileName);
+			File pdfFile = new File(pdfDir.getPath() + "/" + ac.getPmid() + ".pdf");
 
 			// note: we always overwrite any existing files.
 			FileOutputStream output = new FileOutputStream(pdfFile.getPath());
@@ -156,6 +169,20 @@ public class ExtendedDigitalLibraryServiceImpl implements
 
 			de.getExtDigLibDao().addFtdToArticleCitation(doc, ac, pdfFile);
 
+			if( corpusName != null && corpusName.length() > 0 ) {
+				List<Long> articleIds = new ArrayList<Long>();
+				articleIds.add( ac.getVpdmfId() );
+				
+				Corpus_qo cQo = new Corpus_qo();
+				cQo.setName( corpusName );
+				
+				List<LightViewInstance> listLvi = this.extDigLibDao.getCoreDao().listInTrans(cQo, "Corpus");
+				if( listLvi.size() == 1 ) {
+					de.getExtDigLibDao().addArticlesToCorpusWithIdsInTrans(articleIds, listLvi.get(0).getVpdmfId() );
+				}
+				
+			}
+			
 			this.extDigLibDao.getCoreDao().getCe().commitTransaction();
 
 		} catch (Exception e) {
@@ -1198,7 +1225,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 	}
 	
 	@Override
-	public Document retrieveFragmentTree() 
+	public Document retrieveFragmentTree(Long vpdmfId) 
 			throws Exception {
 		
 		init();
@@ -1221,6 +1248,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 				"frg.ftd_id = ftd.vpdmfId AND " +
 				"lc.fullText_id = ftd.vpdmfId AND " +
 				"lc.vpdmfId = vt.vpdmfId AND " +
+				"lc.vpdmfId = " + vpdmfId + " AND " +
 				"lc.vpdmfId = ac.vpdmfId AND " +
 				"b.fragment_id = frg.vpdmfId AND " +
 				"b.vpdmfOrder = 0 AND " +
@@ -1267,7 +1295,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			Long bId = rs.getLong("b.vpdmfId");
 			String t = rs.getString("b.text");
 
-			Element jEl = doc.createElement("node");
+			/*Element jEl = doc.createElement("node");
 			jEl.setAttribute("label", j);
 			jEl.setAttribute("data", jId + "");
 			jEl.setAttribute("type", "journal");
@@ -1296,7 +1324,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			} else {
 				vLookup.put(j + "_" + y + "_" + v, vEl);
 				yEl.appendChild(vEl);
-			}
+			}*/
 
 			Element citEl = doc.createElement("node");
 			citEl.setAttribute("label", cit);
@@ -1306,7 +1334,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 				citEl = pLookup.get(cit);
 			} else {
 				pLookup.put(cit, citEl);
-				vEl.appendChild(citEl);
+				root.appendChild(citEl);
 			}
 
 			Element frgEl = doc.createElement("node");
@@ -1327,5 +1355,95 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		
 	}
 
+	/**
+	 * Given the id of a specific corpus, return a zip archive of the xml files
+	 */
+	@Override
+	public String packageCorpusArchive(Long corpusId) throws Exception {
+		
+		init();
+		
+		CoreDao coreDao = this.extDigLibDao.getCoreDao();
+		coreDao.connectToDb();
+		
+		Corpus c = coreDao.findByIdInTrans(corpusId, new Corpus(), "Corpus");
+		
+		File tempDir = Files.createTempDir();
+		tempDir.deleteOnExit();
+		String dAddr = tempDir.getAbsolutePath();
+		String cName = c.getName();
+		cName = cName.replaceAll(" ", "_");
+		Date date = new Date();
+		String pattern = "yy-MM-dd-hhmm";
+		SimpleDateFormat formatter = new SimpleDateFormat(pattern);
+		String dateString = formatter.format(date);
+		System.out.println(pattern + " " + dateString);
+
+		File tempFile = new File(dAddr + "/" + cName + "_" + dateString + "_pmcXml.zip");
+		
+		String wd = coreDao.getWorkingDirectory();
+
+		String sql = "select ac.pmid, ftd.name " + 
+				"from " + 
+				"Corpus as c, " +
+				"FTD as ftd, " +
+				"LiteratureCitation as lc, " +
+				"Corpus_corpora__resources_LiteratureCitation as c_lc, " +				
+				"ArticleCitation as ac " +
+				"where " +
+				"lc.vpdmfId = ac.vpdmfId AND " + 
+				"c_lc.resources_id = lc.vpdmfId AND " +
+				"c_lc.corpora_id = c.vpdmfId AND " +
+				"lc.fullText_id = ftd.vpdmfId AND " +
+				"c.vpdmfId = " + corpusId;
+
+		ResultSet rs = coreDao.getCe().executeRawSqlQuery(sql);
+		
+		// Create a buffer for reading the files
+		byte[] buf = new byte[1024];
+
+		// Create the ZIP output stream for a binary file 
+		// (don't want to load everything into memory)
+		ZipOutputStream out = new ZipOutputStream(new FileOutputStream(
+				tempFile));
+
+		while( rs.next() ) {
+			Integer pmid = rs.getInt("ac.pmid");
+			String pdfPath = rs.getString("ftd.name");
+			String stemPath = wd + "/" + pdfPath.substring(0, pdfPath.lastIndexOf("."));
+			File xml = new File(stemPath += "_pmc.xml");
+			
+			if( xml.exists() ) {
+				
+				FileInputStream in = new FileInputStream(xml);
+
+				// Add ZIP entry to output stream.
+				out.putNextEntry(new ZipEntry(xml.getName()));
+
+				// Transfer bytes from the file to the ZIP file
+				int len;
+				while ((len = in.read(buf)) > 0) {
+					out.write(buf, 0, len);
+				}
+
+				// Complete the entry
+				out.closeEntry();
+				in.close();
+			}
+		
+		}
+
+		// Complete the ZIP file
+		out.close();
+		
+		// Serialize zip to a byte[] object. 
+		FileInputStream zipIs = new FileInputStream(tempFile);
+		byte[] zipDat = IOUtils.toByteArray(zipIs);
+		
+		Converters.recursivelyDeleteFiles(tempDir);
+
+		return "";
+
+	}
 	
 }

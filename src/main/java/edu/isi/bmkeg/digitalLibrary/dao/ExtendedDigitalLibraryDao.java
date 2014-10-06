@@ -67,6 +67,8 @@ public interface ExtendedDigitalLibraryDao {
 	
 	public int addArticlesToCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
 	
+	public int addArticlesToCorpusWithIdsInTrans(List<Long> articleIds, long corpusId) throws Exception;
+
 	public void addArticlesToCorpus(List<Integer> keySet, String corpusName) throws Exception;
 	
 	public void addArticlesToCorpusInTrans(List<Integer> pmids, String corpusName) throws Exception;
