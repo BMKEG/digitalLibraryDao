@@ -208,7 +208,68 @@
 			<version>9.3-1100-jdbc41</version>
 		</dependency>
 
+	<!-- Omitting versions of clearTk dependencies because they are handle 
+			in the dependency management imported from cleartk-release -->
+		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-eval</artifactId>
+		</dependency>
 
+		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-ml</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-ml-opennlp-maxent</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-ml-liblinear</artifactId>
+		</dependency>
+
+ 		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-ml-libsvm</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-ml-mallet</artifactId>
+		</dependency> 
+
+		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-ml-svmlight</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-ml-tksvmlight</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-opennlp-tools</artifactId>
+		</dependency>
+
+ 		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-util</artifactId>
+		</dependency>
+
+ 		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-snowball</artifactId>
+		</dependency>
+
+   		<dependency>
+			<groupId>org.cleartk</groupId>
+			<artifactId>cleartk-token</artifactId>
+		</dependency> 
+	 						 					
 	</dependencies>
 
 </project>

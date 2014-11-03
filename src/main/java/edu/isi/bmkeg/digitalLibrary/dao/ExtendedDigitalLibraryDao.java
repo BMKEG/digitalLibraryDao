@@ -1,11 +1,15 @@
 package edu.isi.bmkeg.digitalLibrary.dao;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.xml.transform.TransformerException;
 
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
 import edu.isi.bmkeg.digitalLibrary.model.citations.Corpus;
@@ -89,6 +93,12 @@ public interface ExtendedDigitalLibraryDao {
 
 	public int removeArticlesFromCorpusWithIds(List<Long> articleIds, long corpusId) throws Exception;
 
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~
+	// Higher-levels functions
+	// ~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+	public String retrieveTextFromFtd(FTD ftd) throws SQLException, IOException, 
+			TransformerException, FileNotFoundException;
 
 
 }

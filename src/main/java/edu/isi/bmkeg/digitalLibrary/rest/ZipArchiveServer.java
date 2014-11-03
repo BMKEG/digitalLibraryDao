@@ -54,7 +54,6 @@ public class ZipArchiveServer {
 		String pattern = "yy-MM-dd-hhmm";
 		SimpleDateFormat formatter = new SimpleDateFormat(pattern);
 		String dateString = formatter.format(date);
-		System.out.println(pattern + " " + dateString);
 
 		File tempFile = new File(dAddr + "/" + cName + "_" + dateString + "_pmcXml.zip");
 		
@@ -128,10 +127,9 @@ public class ZipArchiveServer {
 		
 		Converters.recursivelyDeleteFiles(tempDir);
 
-		responseHeaders.setContentType(MediaType.valueOf("application/swf"));
+		responseHeaders.setContentType(MediaType.valueOf("application/zip"));
 	    responseHeaders.setContentLength(zipDat.length);
-	    responseHeaders.set("Content-Disposition", "attachment");
-	    responseHeaders.add("Content-Disposition", "filename=\"" +  tempFile.getName() + '\"');
+	    responseHeaders.set("Content-Disposition", "attachment;filename=\"" +  tempFile.getName() + '\"');
 
 	    ResponseEntity<byte[]> response = new ResponseEntity<byte []>
         		(zipDat, responseHeaders, HttpStatus.OK);

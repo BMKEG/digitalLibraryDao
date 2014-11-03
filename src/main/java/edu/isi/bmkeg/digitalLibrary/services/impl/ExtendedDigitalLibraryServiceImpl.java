@@ -1158,7 +1158,8 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		VPDMf top = this.extDigLibDao.getCoreDao().getTop();
 
 		File brat = Converters.readAppDirectory("bratData", new File(wd));
-		File bratData = new File(brat.getPath() + "/data");
+		File bratData = new File(brat.getPath());
+		String bratUrl = Converters.readAppUrl("brat", new File(wd));
 		
 		if( !bratData.exists() )
 			throw new Exception("Brat is not set up, please set up pointer " +
@@ -1185,6 +1186,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		String year = idxMap.get("[ArticleCitation]LiteratureCitation|LiteratureCitation.pubYear");	
 		String volume = idxMap.get("[ArticleCitation]LiteratureCitation|ArticleCitation.volume");	
 		String pages = idxMap.get("[ArticleCitation]LiteratureCitation|LiteratureCitation.pages");
+		pages = pages.substring(0,pages.indexOf("-"));
 		String stem = author + "_" + year + "_" + volume + "_" + pages;
 			
 		FTDFragment_qo qFrg = new FTDFragment_qo();
@@ -1196,19 +1198,18 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		File frgDir = new File(bratData.getPath() + "/" + stem);
 		frgDir.mkdir();
 		
-
 		for( int i=0; i<l.size(); i++ ) {
 			LightViewInstance lvi = l.get(i);
 			
 			Map<String,String> idxMap2 = lvi.readIndexTupleMap(top);
-			String frgType = idxMap2.get("[FTDFragment]FTDFragment|FTDFragment.frgType");
+			String frgType = idxMap2.get("[FTDFragment]FTDFragment|FTDFragment.frgOrder");
 			if( frgType != null  && frgType.length() > 0 )
-				frgType = frgType.replaceAll("\\s+", "_") + "/";
+				frgType = frgType.replaceAll("\\s+", "_");
 			else 
 				frgType = "";
 
-			File frgFile = new File(bratData.getPath()+"/"+stem+"/"+frgType+stem+"_frg"+(i+1)+".txt");
-			File annFile = new File(bratData.getPath()+"/"+stem+"/"+frgType+stem+"_frg"+(i+1)+".ann");
+			File frgFile = new File(bratData.getPath()+"/"+stem+"/" + frgType+"_frg"+(i+1)+".txt");
+			File annFile = new File(bratData.getPath()+"/"+stem+"/" + frgType+"_frg"+(i+1)+".ann");
 			
 			String frgText = lvi.getVpdmfLabel();
 			int pos = frgText.indexOf("[");
@@ -1220,7 +1221,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			
 		}
 		
-		return stem;
+		return bratUrl + "/#/" + stem;
 			
 	}
 	

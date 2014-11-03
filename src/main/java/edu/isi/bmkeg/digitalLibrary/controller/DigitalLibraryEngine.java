@@ -1,11 +1,17 @@
 package edu.isi.bmkeg.digitalLibrary.controller;
 
 import java.io.BufferedReader;
+
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,7 +23,21 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.select.Elements;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
 import edu.isi.bmkeg.digitalLibrary.dao.DigitalLibraryDao;
 import edu.isi.bmkeg.digitalLibrary.dao.ExtendedDigitalLibraryDao;
@@ -44,8 +64,6 @@ import edu.isi.bmkeg.lapdf.controller.LapdfVpdmfEngine;
 import edu.isi.bmkeg.lapdf.dao.vpdmf.LAPDFTextDaoImpl;
 import edu.isi.bmkeg.lapdf.extraction.exceptions.EncryptionException;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
-import edu.isi.bmkeg.terminology.model.Term;
-import edu.isi.bmkeg.terminology.model.qo.Ontology_qo;
 import edu.isi.bmkeg.utils.Converters;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
@@ -861,70 +879,6 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			
 		}
 
-	}
-	
-	public void instantiateFragmentTypeTerms() throws Exception {
-		
-		CoreDao coreDao = this.extDigLibDao.getCoreDao();
-		
-		coreDao.init();
-		
-		Ontology_qo qOnt = new Ontology_qo();
-		qOnt.setShortName("bmkegFragmentTypes");		
-		List<LightViewInstance> l = coreDao.list(qOnt, "Ontology");
-		
-		if( l.size() == 0 ) {
-
-			String ns = "http://bmkeg.isi.edu/fragmentTypes/";
-			
-			edu.isi.bmkeg.terminology.model.Ontology ont = 
-					new edu.isi.bmkeg.terminology.model.Ontology();
-			ont.setFullName("BMKEG Fragment Types");
-			ont.setDisplayName("BMKEG Fragment Types");
-			ont.setDescription("Types of fragments to be used within the BMKEG group");
-			ont.setNs(ns);
-			ont.setShortName("bmkegFragmentTypes");
-			coreDao.insert(ont, "Ontology");
-
-			Term t1 = new Term();
-			t1.setFullTermURI(ns + "/introFragment");
-			t1.setNamespace(ns);
-			t1.setOntology(ont);
-			t1.setShortTermId("introFragment");
-			t1.setTermType("Fragment Type");
-			t1.setTermValue("Introduction Fragment");
-			coreDao.insert(t1, "Term");
-			
-			Term t2 = new Term();
-			t2.setFullTermURI(ns + "/introFragment");
-			t2.setNamespace(ns);
-			t2.setOntology(ont);
-			t2.setShortTermId("resultFragment");
-			t2.setTermType("Fragment Type");
-			t2.setTermValue("Result Fragment");
-			coreDao.insert(t2, "Term");
-			
-			Term t3 = new Term();
-			t3.setFullTermURI(ns + "/introFragment");
-			t3.setNamespace(ns);
-			t3.setOntology(ont);
-			t3.setShortTermId("interpretFragment");
-			t3.setTermType("Fragment Type");
-			t3.setTermValue("Interpretation Fragments");
-			coreDao.insert(t3, "Term");
-			
-			Term t4 = new Term();
-			t4.setFullTermURI(ns + "/introFragment");
-			t4.setNamespace(ns);
-			t4.setOntology(ont);
-			t4.setShortTermId("discussFragment");
-			t4.setTermType("Fragment Type");
-			t4.setTermValue("Discussion Fragments");
-			coreDao.insert(t4, "Term");
-			
-		}
-		
-		
 	}
 	
 }

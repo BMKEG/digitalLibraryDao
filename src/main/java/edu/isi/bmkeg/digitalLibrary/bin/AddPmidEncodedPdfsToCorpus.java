@@ -48,6 +48,8 @@ public class AddPmidEncodedPdfsToCorpus {
 		
 		CmdLineParser parser = new CmdLineParser(options);
 
+		DigitalLibraryEngine de = null;
+
 		try {
 			
 			parser.parseArgument(args);
@@ -55,11 +57,10 @@ public class AddPmidEncodedPdfsToCorpus {
 			if( !options.pdfFileOrDr.exists() ) {
 				throw new CmdLineException(parser, options.pdfFileOrDr.getAbsolutePath() + " does not exist.");
 			}
-		
-			DigitalLibraryEngine de = null;
 			
 			de = new DigitalLibraryEngine();
 			de.initializeVpdmfDao(options.login, options.password, options.dbName, options.workingDirectory);
+			de.getDigLibDao().getCoreDao().connectToDb();
 			
 			Map<Integer,Long> mapPmidsToVpdmfids = de.insertPmidPdfFileOrDir(options.pdfFileOrDr);
 			
@@ -78,6 +79,10 @@ public class AddPmidEncodedPdfsToCorpus {
 			parser.printUsage(System.err);
 			System.exit(-1);
 		
+		} finally {
+			
+			de.getDigLibDao().getCoreDao().commitTransaction();
+			
 		}
 
 	}
