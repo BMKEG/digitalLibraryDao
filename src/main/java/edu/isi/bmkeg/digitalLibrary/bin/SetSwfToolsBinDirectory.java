@@ -16,6 +16,9 @@ public class SetSwfToolsBinDirectory {
 
 		@Option(name = "-swfToolsBin", usage = "Directory for swftools bin directory", required = true, metaVar = "DIR")
 		public File dir;
+
+		@Option(name = "-wd", usage = "Working Directory ", required = true, metaVar = "WD")
+		public File wd;
 		
 	}
 	
@@ -52,7 +55,7 @@ public class SetSwfToolsBinDirectory {
 			System.exit(-1);
 		}
 			
-		Converters.writeAppDirectory("swftools", options.dir);
+		Converters.writeAppDirectory("swftools", options.dir, options.wd);
 		
 	}
 

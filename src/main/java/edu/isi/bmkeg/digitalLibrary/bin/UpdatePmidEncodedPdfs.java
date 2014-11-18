@@ -70,7 +70,7 @@ public class UpdatePmidEncodedPdfs {
 		} 
 				
 		if( !options.pdfFileOrDir.exists() ) {
-			System.err.println(args[0] + " does not exist.");
+			System.err.println(options.pdfFileOrDir + " does not exist.");
 			System.err.print("Arguments: ");
 			parser.printSingleLineUsage(System.err);
 			System.err.println("\n\n Options: \n");
@@ -90,7 +90,7 @@ public class UpdatePmidEncodedPdfs {
 				options.password, 
 				options.dbName, 
 				options.workingDirectory);
-		
+				
 		de.updatePmidPdfFileOrDir(options.pdfFileOrDir, 
 				options.forceBlocking);
 

@@ -368,6 +368,9 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		//
 		for (ID id : ac.getIds()) {
 
+			if( id == null || id.getIdType() == null )
+				continue;
+			
 			if (id.getIdType().equals("pmc")) {
 
 				File f = new File(wd + "/" + pthStem + "_pmc.xml");
@@ -411,10 +414,8 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		File pmcXmlFile = new File(wd + "/" + pmcXmlPath);
 
 		if (!pmcXmlFile.exists())
-			throw new FileNotFoundException("Can't find "
-					+ pmcXmlFile.getPath()
-					+ ". Please check underlying database.");
-
+			return "";
+		
 		String txtPath = pdfPath.substring(0, pdfPath.lastIndexOf(".pdf"))
 				+ ".txt";
 		File txtFile = new File(wd + "/" + txtPath);

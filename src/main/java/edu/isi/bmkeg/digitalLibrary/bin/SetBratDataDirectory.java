@@ -17,6 +17,9 @@ public class SetBratDataDirectory {
 		@Option(name = "-bratDataDirectory", usage = "Directory for brat bin directory", required = true, metaVar = "DIR")
 		public File dir;
 
+		@Option(name = "-wd", usage = "Working Directory ", required = true, metaVar = "WD")
+		public File wd;
+		
 	}
 	
 	private static Logger logger = Logger.getLogger(SetBratDataDirectory.class);
@@ -52,7 +55,7 @@ public class SetBratDataDirectory {
 			System.exit(-1);
 		}
 			
-		Converters.writeAppDirectory("bratData", options.dir);
+		Converters.writeAppDirectory("bratData", options.dir, options.wd);
 		
 	}
 
