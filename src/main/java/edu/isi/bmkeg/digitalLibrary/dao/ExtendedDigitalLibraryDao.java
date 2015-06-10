@@ -100,5 +100,6 @@ public interface ExtendedDigitalLibraryDao {
 	public String retrieveTextFromFtd(FTD ftd) throws SQLException, IOException, 
 			TransformerException, FileNotFoundException;
 
+	public String listFileNamesInCorpus(String corpusName) throws Exception;
 
 }

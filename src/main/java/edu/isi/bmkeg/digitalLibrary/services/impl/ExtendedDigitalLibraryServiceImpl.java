@@ -7,7 +7,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.URL;
 import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -63,6 +62,7 @@ import edu.isi.bmkeg.digitalLibrary.services.ExtendedDigitalLibraryService;
 import edu.isi.bmkeg.ftd.dao.FtdDao;
 import edu.isi.bmkeg.ftd.dao.impl.FtdDaoImpl;
 import edu.isi.bmkeg.ftd.model.FTD;
+import edu.isi.bmkeg.ftd.model.FTDFragment;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
 import edu.isi.bmkeg.ftd.model.FTDRuleSet;
 import edu.isi.bmkeg.ftd.model.qo.FTDFragment_qo;
@@ -1186,7 +1186,8 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		String year = idxMap.get("[ArticleCitation]LiteratureCitation|LiteratureCitation.pubYear");	
 		String volume = idxMap.get("[ArticleCitation]LiteratureCitation|ArticleCitation.volume");	
 		String pages = idxMap.get("[ArticleCitation]LiteratureCitation|LiteratureCitation.pages");
-		pages = pages.substring(0,pages.indexOf("-"));
+		if( pages.indexOf("-") != -1 )	
+			pages = pages.substring(0,pages.indexOf("-"));
 		String stem = author + "_" + year + "_" + volume + "_" + pages;
 			
 		FTDFragment_qo qFrg = new FTDFragment_qo();
@@ -1202,22 +1203,50 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			LightViewInstance lvi = l.get(i);
 			
 			Map<String,String> idxMap2 = lvi.readIndexTupleMap(top);
-			String frgType = idxMap2.get("[FTDFragment]FTDFragment|FTDFragment.frgOrder");
-			if( frgType != null  && frgType.length() > 0 )
-				frgType = frgType.replaceAll("\\s+", "_");
+			String frgCode = idxMap2.get("[FTDFragment]FTDFragment|FTDFragment.frgOrder");
+			if( frgCode != null  && frgCode.length() > 0 )
+				frgCode = frgCode.replaceAll("\\s+", "_");
 			else 
-				frgType = "";
+				frgCode = "";
+			String frgType = idxMap2.get("[FTDFragment]FTDFragment|FTDFragment.frgType");
 
-			File frgFile = new File(bratData.getPath()+"/"+stem+"/" + frgType+"_frg"+(i+1)+".txt");
-			File annFile = new File(bratData.getPath()+"/"+stem+"/" + frgType+"_frg"+(i+1)+".ann");
+			File frgFile = new File(bratData.getPath()+"/"+stem+"/"+frgType+"_"+frgCode+"_"+(i+1)+".txt");
+			File annFile = new File(bratData.getPath()+"/"+stem+"/"+frgType+"_"+frgCode+"_"+(i+1)+".ann");
 			
-			String frgText = lvi.getVpdmfLabel();
-			int pos = frgText.indexOf("[");
-			frgText = frgText.substring(pos+1,frgText.length()-1);
-			frgText = frgText.replaceAll("\\s+", " ");
+			String frgText = "";
+			String annText = "";
+			int pos = 0;
+			// Reconstruct text of the data entities. 
+			FTDFragment frg = coreDao.findById(lvi.getVpdmfId(), new FTDFragment(), "FTDFragment");
+
+			for(int j=0; j<frg.getAnnotations().size(); j++) {
+				FTDFragmentBlock blk = frg.getAnnotations().get(j);
+
+				String blkText = blk.getText() + " ";
+				blkText = blkText.replaceAll("\\s+", " ");
+				blkText = blkText.replaceAll("\\-\\s+", "");
+				
+				frgText += blkText;
+				
+				String code = blk.getCode();
+				if( code == null || code.equals("-") ) 
+					continue;
+				
+				int start = frgText.indexOf(blkText);
+				int end = start + blkText.length() - 1;
+				
+				annText += "T"+ (j+1) + "\t" + 
+						code.replaceAll(": ", "_") + " " + 
+						start + " " +
+						end + "\t" + 
+						blkText +"\n";
+				
+				pos += pos + blkText.length();
+				
+			}
 			
 			FileUtils.writeStringToFile(frgFile, frgText);
-			FileUtils.writeStringToFile(annFile, "");
+			FileUtils.writeStringToFile(annFile, annText);
 			
 		}
 		
@@ -1243,7 +1272,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 				"FTD as ftd, " +
 				"Journal as j, " + 
 				"ViewTable as vt, " +
-				"literaturecitation as lc, " +
+				"LiteratureCitation as lc, " +
 				"ArticleCitation as ac " +
 				"where " +
 				"frg.ftd_id = ftd.vpdmfId AND " +
@@ -1360,7 +1389,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 	 * Given the id of a specific corpus, return a zip archive of the xml files
 	 */
 	@Override
-	public String packageCorpusArchive(Long corpusId) throws Exception {
+	public byte[] packageCorpusArchive(Long corpusId) throws Exception {
 		
 		init();
 		
@@ -1383,6 +1412,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		File tempFile = new File(dAddr + "/" + cName + "_" + dateString + "_pmcXml.zip");
 		
 		String wd = coreDao.getWorkingDirectory();
+		File targetFile = new File(wd + "/" + cName + "_" + dateString + "_pmcXml.zip");
 
 		String sql = "select ac.pmid, ftd.name " + 
 				"from " + 
@@ -1443,7 +1473,9 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		
 		Converters.recursivelyDeleteFiles(tempDir);
 
-		return "";
+		FileUtils.writeByteArrayToFile(targetFile, zipDat);
+		
+		return null;
 
 	}
 	

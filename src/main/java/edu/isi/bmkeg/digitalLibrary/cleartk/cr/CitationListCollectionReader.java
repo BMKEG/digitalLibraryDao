@@ -157,7 +157,7 @@ public class CitationListCollectionReader extends DigitalLibraryCollectionReader
 		
 		// This code needs to have this.rs correctly set 
 		// before running it. 
-		this.extractTextFromFtdXml();
+		this.readTextAndFtdFromRsNext();
 		
 	}
 

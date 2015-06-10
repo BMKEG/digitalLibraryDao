@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.log4j.Logger;
-import org.apache.solr.common.SolrInputDocument;
 import org.apache.tools.bzip2.CBZip2InputStream;
 import org.xml.sax.InputSource;
 

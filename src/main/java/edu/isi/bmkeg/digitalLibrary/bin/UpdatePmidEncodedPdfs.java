@@ -18,7 +18,7 @@ public class UpdatePmidEncodedPdfs {
 
 	public static class Options {
 
-		@Option(name = "-pdfs", usage = "Pdfs directory o file", required = true, metaVar = "PDF-DIR-OR-FILE")
+		@Option(name = "-pdfs", usage = "Pdfs directory or file", required = true, metaVar = "PDF-DIR-OR-FILE")
 		public File pdfFileOrDir;
 		
 		@Option(name = "-forceBlocking", usage = "Force reblocking of PDF?", required = false, metaVar = "REBLOCK")

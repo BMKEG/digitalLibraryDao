@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.ResultSet;
@@ -53,6 +52,7 @@ import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Corpus_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.ID_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.JournalEpoch_qo;
 import edu.isi.bmkeg.digitalLibrary.model.qo.citations.Journal_qo;
+import edu.isi.bmkeg.digitalLibrary.utils.XmlUtils;
 import edu.isi.bmkeg.digitalLibrary.utils.elsevier.ElsevierApiKey;
 import edu.isi.bmkeg.ftd.model.FTD;
 import edu.isi.bmkeg.ftd.model.FTDFragmentBlock;
@@ -420,9 +420,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 				+ ".txt";
 		File txtFile = new File(wd + "/" + txtPath);
 		if (txtFile.exists()) {
-
 			return FileUtils.readFileToString(txtFile);
-
 		}
 
 		FileReader inputReader = new FileReader(pmcXmlFile);
@@ -1203,4 +1201,59 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 	}
 
+	public String listFileNamesInCorpus(String cName) throws Exception {
+		
+		StringBuffer out = new StringBuffer();
+		
+		String wd = coreDao.getWorkingDirectory();
+
+		String sql = "select ac.pmid, ftd.name " + 
+				"from " + 
+				"Corpus as c, " +
+				"FTD as ftd, " +
+				"LiteratureCitation as lc, " +
+				"Corpus_corpora__resources_LiteratureCitation as c_lc, " +				
+				"ArticleCitation as ac " +
+				"where " +
+				"lc.vpdmfId = ac.vpdmfId AND " + 
+				"c_lc.resources_id = lc.vpdmfId AND " +
+				"c_lc.corpora_id = c.vpdmfId AND " +
+				"lc.fullText_id = ftd.vpdmfId AND " +
+				"c.name = '" + cName + "';";
+
+		ResultSet rs = coreDao.getCe().executeRawSqlQuery(sql);
+			
+		while( rs.next() ) {
+
+			Integer pmid = rs.getInt("ac.pmid");
+			String pdfPath = rs.getString("ftd.name");
+			String stemPath = wd + "/" + pdfPath.substring(0, pdfPath.lastIndexOf("."));
+			String stem = pdfPath.substring(1, pdfPath.lastIndexOf("."));
+			
+			File pmcXmlFile = new File(stemPath + "_pmc.xml");
+			File txtFile = new File(stemPath + ".txt");
+			
+			if( txtFile.exists() ) {
+				
+				out.append( stem + ".txt\n" );
+				
+			} else {
+				
+				String html = XmlUtils.convertPmcXmlToHtml(pmcXmlFile);
+				String txt = XmlUtils.convertPmcHtmlToTxt(html);
+				FileUtils.writeStringToFile(txtFile, txt);
+				
+				logger.info( "generating " + txtFile.getPath());
+				out.append( stem + ".txt\n" );
+				
+			}
+		
+		}
+		
+		rs.close();
+		
+		return out.toString();
+		
+	}
+	
 }

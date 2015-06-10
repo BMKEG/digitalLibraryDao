@@ -58,6 +58,6 @@ public interface ExtendedDigitalLibraryService {
 	
 	Document retrieveFragmentTree(Long vpdmfId) throws Exception;
 
-	String packageCorpusArchive(Long corpusId) throws Exception;
+	byte[] packageCorpusArchive(Long corpusId) throws Exception;
 
 }

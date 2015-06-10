@@ -4,6 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.transform.TransformerException;
 
@@ -18,8 +22,12 @@ import org.uimafit.component.JCasCollectionReader_ImplBase;
 import org.uimafit.descriptor.ConfigurationParameter;
 import org.uimafit.factory.ConfigurationParameterFactory;
 
+import bioc.BioCAnnotation;
+import bioc.type.UimaBioCAnnotation;
+import bioc.type.UimaBioCDocument;
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
-import edu.isi.bmkeg.digitalLibrary.model.citations.LiteratureCitation;
+import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
+import edu.isi.bmkeg.digitalLibrary.utils.BioCUtils;
 import edu.isi.bmkeg.ftd.model.FTD;
 
 /**
@@ -35,6 +43,7 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 	protected static class DocumentTextHolder {
 		public FTD ftd;
 		public String text;
+		public List<BioCAnnotation> annotations = new ArrayList<BioCAnnotation>();
 		
 		public DocumentTextHolder(FTD ftd, String text) {
 			this.ftd = ftd;
@@ -74,7 +83,14 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 					"dbUrl");
 	@ConfigurationParameter(mandatory = true, description = "The Digital Library URL")
 	protected String dbUrl;
-		
+
+	public static final String INCLUDE_FORMATTING = ConfigurationParameterFactory
+			.createConfigurationParameterName(DigitalLibraryCollectionReader.class,
+					"includeFormatting");
+	@ConfigurationParameter(mandatory = false, description = "Include document formatting in the pipeline")
+	protected Boolean includeFormatting = false;
+
+	
 	protected ResultSet rs;
 
 	protected boolean eof = false;
@@ -87,6 +103,8 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 
 	protected DocumentTextHolder docTxtHolder;
 
+	private Pattern simple_formatting_pattern = Pattern.compile("__s_(?<type>[A-Z]+)__\\s?(.*?)\\s?__e_\\k<type>__");
+	
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 
@@ -101,6 +119,7 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 					" l.abstractText, " +
 					" d.vpdmfId, " + 
 					" d.name, " + 
+					" a.pmid, " + 
 					" l.vpdmfId ";
 
 			String countSql = "SELECT COUNT(*) ";
@@ -108,10 +127,12 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 			String fromWhereSql = "FROM LiteratureCitation AS l " +
 					"inner join FTD AS d on (l.fullText_id = d.vpdmfId), " + 
 					" Corpus AS c, " +
-					" Corpus_corpora__resources_LiteratureCitation AS link " + 
+					" Corpus_corpora__resources_LiteratureCitation AS link, " + 
+					" ArticleCitation AS a " +
 					"WHERE " + 
 					" c.name = '" + corpusName +  "' AND " +
 					" l.vpdmfId=link.resources_id AND " +
+					" l.vpdmfId=a.vpdmfId AND " +
 					" c.vpdmfId=link.corpora_id";
 
 			if( corpusName == null ) {
@@ -152,24 +173,58 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 	public void getNext(JCas jcas) throws IOException, CollectionException {
 
 		try {
+			List<BioCAnnotation> formatAnnotations = 
+					new ArrayList<BioCAnnotation>();
+			if( this.includeFormatting )
+				formatAnnotations = this.retrieveFormattingAnnotationsAndOffsets(
+						docTxtHolder.text);
+				
+			String unformattedText = 
+					this.retrieveUnformattedText(docTxtHolder.text);
 			
-			if( docTxtHolder == null )
-			    jcas.setDocumentText("");
-			else
-				jcas.setDocumentText( docTxtHolder.text );
-
-			edu.isi.bmkeg.ftd.uimaTypes.FTD doc = 
+			jcas.setDocumentText( unformattedText );
+						
+			for( BioCAnnotation a : formatAnnotations ) {
+				UimaBioCAnnotation uiA = BioCUtils.convertBioCAnnotation(a, jcas);
+				uiA.addToIndexes();
+				//int s = a.getLocations().get(0).getOffset();
+				//int e = s + a.getLocations().get(0).getLength();
+				//logger.debug("text: " + unformattedText.substring(s, e) + ", annotation: " + a.getText() );
+				//FormattedChunk fc = new FormattedChunk(jcas, s, e);
+				//fc.setFormatType(a.getInfon("simple_formatting_type"));
+				//fc.addToIndexes();
+			}
+				
+			/*edu.isi.bmkeg.ftd.uimaTypes.FTD ftdUima = 
 					new edu.isi.bmkeg.ftd.uimaTypes.FTD(jcas);
-
-			doc.setVpdmfId(docTxtHolder.ftd.getVpdmfId());
-			doc.setName(docTxtHolder.ftd.getName());
+			ftdUima.setVpdmfId(docTxtHolder.ftd.getVpdmfId());
+			ftdUima.setName(docTxtHolder.ftd.getName());
+		    ftdUima.addToIndexes(jcas);
 			
-		    doc.addToIndexes(jcas);
-
+			edu.isi.bmkeg.digitalLibrary.uimaTypes.citations.ArticleCitation acUima = 
+					new edu.isi.bmkeg.digitalLibrary.uimaTypes.citations.ArticleCitation(jcas);
+			ArticleCitation ac = (ArticleCitation) docTxtHolder.ftd.getCitation();
+			acUima.setTitle(ac.getTitle());
+			acUima.setAbstractText(ac.getAbstractText());			
+			acUima.setPmid(ac.getPmid());			
+		    acUima.addToIndexes(jcas);*/
+			ArticleCitation ac = (ArticleCitation) docTxtHolder.ftd.getCitation();
+			
+			UimaBioCDocument uiD = new UimaBioCDocument(jcas);
+			uiD.setBegin(0);
+			uiD.setEnd(unformattedText.length());
+			uiD.setId(ac.getPmid() + "");
+			uiD.addToIndexes();
+			
+			/*edu.isi.bmkeg.digitalLibrary.uimaTypes.citations.Corpus cUima = 
+					new edu.isi.bmkeg.digitalLibrary.uimaTypes.citations.Corpus(jcas);
+			cUima.setName(this.corpusName);
+			cUima.addToIndexes(jcas);*/
+			
 		    moveNext();
 		    
 		    pos++;
-		    if( (pos % 1000) == 0) {
+		    if( (pos % 10) == 0) {
 		    	System.out.println("Processing " + pos + "th document.");
 		    }
 		    
@@ -179,6 +234,49 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 
 		}
 
+	}
+
+	private String retrieveUnformattedText(String text) {
+		
+		Matcher m = simple_formatting_pattern.matcher(text);
+		
+		while( m.find() ) {
+			String type = m.group(1);
+			String enclosedText = m.group(2);	
+			text = m.replaceFirst(Matcher.quoteReplacement(enclosedText));
+			m = simple_formatting_pattern.matcher(text);
+		}
+		
+		return text;
+		
+	}
+	
+	private List<BioCAnnotation> retrieveFormattingAnnotationsAndOffsets(
+			String text) {
+		
+		List<BioCAnnotation> l = new ArrayList<BioCAnnotation>();
+		if( text == null) 
+			return l;
+		
+		Matcher m = simple_formatting_pattern.matcher(text);
+		while( m.find() ) {
+			String type = m.group(1);
+			String enclosedText = m.group(2);
+			
+			int s = m.start();
+			
+			BioCAnnotation ann = new BioCAnnotation();
+			//ann.setID("");
+			ann.putInfon("simple_formatting_type", type);
+			ann.setText(enclosedText);
+			ann.setLocation(s, enclosedText.length());
+			l.add(ann);
+			
+			text = m.replaceFirst(Matcher.quoteReplacement(enclosedText));
+			m = simple_formatting_pattern.matcher(text);
+		}
+		return l;
+		
 	}
 
 	/**
@@ -205,7 +303,7 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 	 */
 	private void moveNext() throws SQLException, IOException, TransformerException {
 		
-		docTxtHolder = extractTextFromFtdXml();
+		docTxtHolder = readTextAndFtdFromRsNext();
 		
 	}
 	
@@ -223,7 +321,7 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 	 * @throws TransformerException 
 	 * 
 	 */
-	protected DocumentTextHolder extractTextFromFtdXml() throws 
+	protected DocumentTextHolder readTextAndFtdFromRsNext() throws 
 			SQLException, IOException, TransformerException,FileNotFoundException  {
 
 		eof = !rs.next();
@@ -235,14 +333,16 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 		String pdfPath = rs.getString("d.name");
 		String title = rs.getString("l.title");
 		String abst = rs.getString("l.abstractText");
+		Integer pmid = rs.getInt("a.pmid");
 		
 		FTD ftd = new FTD();
 		ftd.setVpdmfId(ftdId);
 		ftd.setName(pdfPath);
-		LiteratureCitation lc = new LiteratureCitation();
+		ArticleCitation lc = new ArticleCitation();
 		ftd.setCitation(lc);
 		lc.setTitle(title);
 		lc.setAbstractText(abst);
+		lc.setPmid(pmid);
 		
 		String plainText = this.digLibEngine.getExtDigLibDao().retrieveTextFromFtd(ftd);			
 		
