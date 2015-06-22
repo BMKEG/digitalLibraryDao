@@ -1,10 +1,16 @@
 package edu.isi.bmkeg.digitalLibrary.bin;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.kohsuke.args4j.CmdLineException;
@@ -13,16 +19,18 @@ import org.kohsuke.args4j.Option;
 
 import edu.isi.bmkeg.digitalLibrary.controller.DigitalLibraryEngine;
 
-public class AddPmidEncodedPdfsToCorpus {
+public class AddListOfPmidsToCorpus {
 
-	private static Logger logger = Logger.getLogger(AddPmidEncodedPdfsToCorpus.class);
+	private static Logger logger = Logger.getLogger(AddListOfPmidsToCorpus.class);
 
+	private static Pattern patt = Pattern.compile("\\b(\\d+)\\b");
+	
 	public static class Options {
 
-		@Option(name = "-pdfs", usage = "Pdfs directory or file", required = true, metaVar = "PDF-DIR-OR-FILE")
-		public File pdfFileOrDr;
+		@Option(name = "-pmidsFile", usage = "File containing list of PMIDs", required = true, metaVar = "PMID-LIST")
+		public File pmidsFile;
 		
-		@Option(name = "-corpus", usage = "Corpus name", required = false, metaVar = "CORPUS")
+		@Option(name = "-corpus", usage = "Corpus name", required = true, metaVar = "CORPUS")
 		public String corpusName;
 		
 		@Option(name = "-l", usage = "Database login", required = true, metaVar = "LOGIN")
@@ -54,21 +62,27 @@ public class AddPmidEncodedPdfsToCorpus {
 			
 			parser.parseArgument(args);
 
-			if( !options.pdfFileOrDr.exists() ) {
-				throw new CmdLineException(parser, options.pdfFileOrDr.getAbsolutePath() + " does not exist.");
+			if( !options.pmidsFile.exists() ) {
+				throw new CmdLineException(parser, options.pmidsFile.getAbsolutePath() + " does not exist.");
 			}
 			
 			de = new DigitalLibraryEngine();
 			de.initializeVpdmfDao(options.login, options.password, options.dbName, options.workingDirectory);
 			de.getDigLibDao().getCoreDao().connectToDb();
-			
-			Map<Integer,Long> mapPmidsToVpdmfids = de.insertPmidPdfFileOrDir(options.pdfFileOrDr);
-			
-			if( options.corpusName != null) {
-				List<Integer> ids = new ArrayList<Integer>(mapPmidsToVpdmfids.keySet());
-				Collections.sort(ids);
-				de.loadArticlesFromPmidListToCorpus(ids, options.corpusName);		
+						
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					new FileInputStream(options.pmidsFile)));			
+			String inputLine;
+			List<Integer> ids = new ArrayList<Integer>();
+			while ((inputLine = in.readLine()) != null) {
+				Matcher m = patt.matcher(inputLine);
+				if( m.find() ) {
+					Integer pmid = new Integer(m.group(1)); 
+					ids.add(pmid);					
+				}
 			}
+			Collections.sort(ids);
+			de.loadArticlesFromPmidListToCorpus(ids, options.corpusName);		
 			
 		} catch (CmdLineException e) {
 

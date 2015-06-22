@@ -217,7 +217,7 @@ public class ImportFullTextDocumentsFromCitationUrls {
 				Thread.sleep(1000);
 				
 				String eFetchUrl = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=" + pmcid;
-				File pmcXml = new File(options.workingDirectory + stem + pmid + "_pmc.xml" );
+				File pmcXml = new File(options.workingDirectory + stem + pmid + ".nxml" );
 				
 				if( !pmcXml.exists() ) {
 					url = new URL(eFetchUrl);
@@ -309,7 +309,7 @@ public class ImportFullTextDocumentsFromCitationUrls {
 				ftd.setXmlFile( stem + pmid + "_lapdf.xml");				
 				ftd.setXmlLoaded(xmlFile.exists());
 				
-				ftd.setPmcXmlFile(stem + pmid + "_pmc.xml");
+				ftd.setPmcXmlFile(stem + pmid + ".nxml");
 				ftd.setPmcLoaded(pmcXml.exists());
 
 				ArticleCitation ac = de.getExtDigLibDao().getCoreDao().findById(

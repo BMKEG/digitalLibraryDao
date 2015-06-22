@@ -8,6 +8,7 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
@@ -64,7 +65,9 @@ import edu.isi.bmkeg.lapdf.controller.LapdfVpdmfEngine;
 import edu.isi.bmkeg.lapdf.dao.vpdmf.LAPDFTextDaoImpl;
 import edu.isi.bmkeg.lapdf.extraction.exceptions.EncryptionException;
 import edu.isi.bmkeg.lapdf.model.LapdfDocument;
+import edu.isi.bmkeg.lapdf.xml.model.LapdftextXMLDocument;
 import edu.isi.bmkeg.utils.Converters;
+import edu.isi.bmkeg.utils.xml.XmlBindingTools;
 import edu.isi.bmkeg.vpdmf.dao.CoreDao;
 import edu.isi.bmkeg.vpdmf.model.instances.LightViewInstance;
 
@@ -256,19 +259,10 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 							continue LOOP;
 						}
 					}
-
-					LapdfDocument doc = this.blockifyFile(pdf);
-
-					JournalEpoch je = this.extDigLibDao
-							.retriveJournalEpochForCitation(ac);
-					if (je != null && je.getRules() != null) {
-						FTDRuleSet rs = je.getRules();
-						File ruleFile = new File(workDir.getPath() + "/"
-								+ rs.getFilePath());
-						this.classifyDocument(doc, ruleFile);
-					}
-
-					this.extDigLibDao.addFtdToArticleCitation(doc, ac, pdf);
+					
+					this.applyLapdfToFile(ac, pdf);
+					
+					this.extDigLibDao.addFtdToArticleCitation(ac, pdf);
 
 					pmidLookup.put(ac.getPmid(), ac.getVpdmfId());
 
@@ -292,18 +286,9 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 			ArticleCitation ac = insertCodedPdfFileName(pdfOrDir.getName(),
 					"pmid");
 
-			LapdfDocument doc = this.blockifyFile(pdfOrDir);
-
-			JournalEpoch je = this.extDigLibDao
-					.retriveJournalEpochForCitation(ac);
-			if (je != null && je.getRules() != null) {
-				FTDRuleSet rs = je.getRules();
-				File ruleFile = new File(workDir.getPath() + "/"
-						+ rs.getFilePath());
-				this.classifyDocument(doc, ruleFile);
-			}
-
-			this.extDigLibDao.addFtdToArticleCitation(doc, ac, pdfOrDir);
+			this.applyLapdfToFile(ac, pdfOrDir);
+			
+			this.extDigLibDao.addFtdToArticleCitation(ac, pdfOrDir);
 
 			pmidLookup.put(ac.getPmid(), ac.getVpdmfId());
 
@@ -311,6 +296,33 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 		return pmidLookup;
 
+	}
+	
+	public void applyLapdfToFile(ArticleCitation ac, File pdf) throws Exception {
+		String wdPath = this.extDigLibDao.getCoreDao().getWorkingDirectory();
+		File wd = new File(wdPath);
+		String dirPth = "pdfs/" + ac.getJournal().getAbbr() + "/"
+				+ ac.getPubYear() + "/" + ac.getVolValue();
+		dirPth = dirPth.replaceAll("\\s+", "_");
+		File pdfDir = new File(wd + "/" + dirPth);					
+		File lapdfFile = new File(pdfDir.getPath() + "/" +
+				pdf.getName().replaceAll("\\.pdf$", "_lapdf.xml"));
+		
+		if( !lapdfFile.exists() ) {
+			LapdfDocument doc = this.blockifyFile(pdf);
+
+			JournalEpoch je = this.extDigLibDao
+					.retriveJournalEpochForCitation(ac);
+			if (je != null && je.getRules() != null) {
+				FTDRuleSet rs = je.getRules();
+				File ruleFile = new File(wd.getPath() + "/"
+						+ rs.getFilePath());
+				this.classifyDocument(doc, ruleFile);
+			}
+			LapdftextXMLDocument xml = doc.convertToLapdftextXmlFormat();
+			FileWriter writer = new FileWriter(lapdfFile);
+			XmlBindingTools.generateXML(xml, writer);
+		}
 	}
 
 	public ArticleCitation insertCodedPdfFileName(String s, String idCode)
@@ -505,7 +517,9 @@ public class DigitalLibraryEngine extends LapdfVpdmfEngine {
 
 				LapdfDocument doc = this.blockifyFile(pdf);
 
-				this.extDigLibDao.addFtdToArticleCitation(doc, ac, pdf);
+				this.applyLapdfToFile(ac, pdf);
+
+				this.extDigLibDao.addFtdToArticleCitation(ac, pdf);
 
 			} else if (ftd.getLaswfFile() == null) {
 

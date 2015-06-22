@@ -91,7 +91,7 @@ public class ZipArchiveServer {
 			Integer pmid = rs.getInt("ac.pmid");
 			String pdfPath = rs.getString("ftd.name");
 			String stemPath = wd + "/" + pdfPath.substring(0, pdfPath.lastIndexOf("."));
-			File xml = new File(stemPath += "_pmc.xml");
+			File xml = new File(stemPath += ".nxml");
 			
 			if( xml.exists() ) {
 				

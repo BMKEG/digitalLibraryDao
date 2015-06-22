@@ -159,10 +159,9 @@ public class EpistemicsSegmentFragmentCollectionReader extends DigitalLibraryCol
 	}
 	
 	/**
-	 * @throws TransformerException 
-	 * @throws IOException 
+	 * @throws Exception 
 	 */
-	private void moveNext() throws SQLException, IOException, TransformerException {
+	private void moveNext() throws Exception {
 		
 		Pattern p2 = Pattern.compile("^(\\D?)(\\d+)(\\D*)$");
 	

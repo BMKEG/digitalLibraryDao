@@ -165,9 +165,9 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			FileOutputStream output = new FileOutputStream(pdfFile.getPath());
 			IOUtils.write(pdfFileData, output);
 
-			LapdfDocument doc = de.blockifyFile(pdfFile);
+			de.applyLapdfToFile(ac, pdfFile);
 
-			de.getExtDigLibDao().addFtdToArticleCitation(doc, ac, pdfFile);
+			de.getExtDigLibDao().addFtdToArticleCitation(ac, pdfFile);
 
 			if( corpusName != null && corpusName.length() > 0 ) {
 				List<Long> articleIds = new ArrayList<Long>();
@@ -831,7 +831,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			LapdfVpdmfEngine lapdfEng = new LapdfVpdmfEngine();
 
 			String s = ftd.getName();
-			ftd.setPmcXmlFile(s.substring(0, s.length() - 4) + "_pmc.xml");
+			ftd.setPmcXmlFile(s.substring(0, s.length() - 4) + ".nxml");
 			ftd.setPmcLoaded(true);
 
 			File xmlFile = new File(wdPth + "/" + ftd.getXmlFile());
@@ -951,7 +951,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			FTD ftd = ftdDao.findArticleDocumentById(vpdmfId);
 
 			String wd = coreDao.getWorkingDirectory();
-			File laSwfFile = new File(wd + "/" + ftd.getLaswfFile());
+			File laSwfFile = new File(wd + "/" + ftd.getName().replaceAll(".pdf$", ".swf"));
 			byte[] laSwf = Converters.fileContentsToBytesArray(laSwfFile);
 
 			return laSwf;
@@ -1124,8 +1124,9 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			File pdf = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".pdf");
 			File swf = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".swf");
 			File lapdf = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_lapdf.xml");
-			File xml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_pmc.xml");
+			File xml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".nxml");
 			File html = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".html");
+			File txt = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".txt");
 			File elsXml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.xml");
 			File elsHtml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.html");
 			//File elsTxt = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.txt");
@@ -1134,13 +1135,13 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			String newFields = lvi.getIndexTupleFields() + s + 
 					"pdfExists" + s +  
 					"xmlExists" + s + 
-					"htmlExists"; 
+					"txtExists"; 
 			lvi.setIndexTupleFields(newFields);
 			
 			String newIndex = lvi.getIndexTuple() + s + 
 					(pdf.exists() && swf.exists() && lapdf.exists()) + s + 
 					(xml.exists() || elsXml.exists()) + s + 
-					(html.exists() || elsHtml.exists());
+					(txt.exists() );
 			
 			lvi.setIndexTuple(newIndex);
 			
@@ -1442,7 +1443,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			Integer pmid = rs.getInt("ac.pmid");
 			String pdfPath = rs.getString("ftd.name");
 			String stemPath = wd + "/" + pdfPath.substring(0, pdfPath.lastIndexOf("."));
-			File xml = new File(stemPath += "_pmc.xml");
+			File xml = new File(stemPath += ".nxml");
 			
 			if( xml.exists() ) {
 				

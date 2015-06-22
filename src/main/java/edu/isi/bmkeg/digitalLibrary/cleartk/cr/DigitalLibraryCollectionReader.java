@@ -301,7 +301,7 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 	 * @throws TransformerException 
 	 * @throws IOException 
 	 */
-	private void moveNext() throws SQLException, IOException, TransformerException {
+	private void moveNext() throws Exception {
 		
 		docTxtHolder = readTextAndFtdFromRsNext();
 		
@@ -321,8 +321,7 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 	 * @throws TransformerException 
 	 * 
 	 */
-	protected DocumentTextHolder readTextAndFtdFromRsNext() throws 
-			SQLException, IOException, TransformerException,FileNotFoundException  {
+	protected DocumentTextHolder readTextAndFtdFromRsNext() throws Exception  {
 
 		eof = !rs.next();
 		
@@ -344,7 +343,7 @@ public class DigitalLibraryCollectionReader extends JCasCollectionReader_ImplBas
 		lc.setAbstractText(abst);
 		lc.setPmid(pmid);
 		
-		String plainText = this.digLibEngine.getExtDigLibDao().retrieveTextFromFtd(ftd);			
+		String plainText = this.digLibEngine.getExtDigLibDao().retrieveTextFromFtd(ftd);
 		
 		return new DocumentTextHolder(ftd, plainText);
 		

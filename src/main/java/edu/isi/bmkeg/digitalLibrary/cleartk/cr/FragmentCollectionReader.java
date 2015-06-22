@@ -149,10 +149,9 @@ public class FragmentCollectionReader extends CitationListCollectionReader {
 	 * sets the next docTxtHolder.
 	 * 
 	 * If skipUnknowns is true it will skips the citations whose aggregated code is "unknown"
-	 * @throws TransformerException 
-	 * @throws IOException 
+	 * @throws Exception 
 	 */
-	private void moveNext() throws SQLException, IOException, TransformerException {
+	private void moveNext() throws Exception {
 	
 		String sqlToCall = sql + this.citations.get(pos);
 		this.rs = digLibEngine.getDigLibDao().getCoreDao().getCe().executeRawSqlQuery( sqlToCall );

@@ -150,7 +150,7 @@ public class CitationListCollectionReader extends DigitalLibraryCollectionReader
 	 * @throws TransformerException 
 	 * @throws IOException 
 	 */
-	private void moveNext() throws SQLException, IOException, TransformerException {
+	private void moveNext() throws Exception {
 	
 		String sqlToCall = sql + this.citations.get(pos);
 		this.rs = digLibEngine.getDigLibDao().getCoreDao().getCe().executeRawSqlQuery( sqlToCall );

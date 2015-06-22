@@ -151,7 +151,7 @@ public class PackageTexFromPmidList {
 					String pdfPath = rs.getString("ftd.name");
 					String stemPath = wd + "/" + pdfPath.substring(0, pdfPath.lastIndexOf("."));
 
-					File xml = new File(stemPath + "_pmc.xml");					
+					File xml = new File(stemPath + ".nxml");					
 					if( xml.exists() ) {
 						
 						FileInputStream in = new FileInputStream(xml);

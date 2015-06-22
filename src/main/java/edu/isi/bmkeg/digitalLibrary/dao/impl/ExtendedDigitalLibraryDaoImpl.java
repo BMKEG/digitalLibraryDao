@@ -297,14 +297,11 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 	// ~~~~~~~~~~~~~~~~~~~~
 	// Add x to y functions
 	// ~~~~~~~~~~~~~~~~~~~~
-	@Override
-	public long addFtdToArticleCitation(LapdfDocument doc, ArticleCitation ac,
+	public long addFtdToArticleCitation(ArticleCitation ac,
 			File pdf) throws Exception {
 
 		FTD ftd = new FTD();
-		ChangeEngine ce = this.getCoreDao().getCe();
 		String wd = this.getCoreDao().getWorkingDirectory();
-		String apiKey = ElsevierApiKey.readApiKey(wd);
 
 		String dirPth = "pdfs/" + ac.getJournal().getAbbr() + "/"
 				+ ac.getPubYear() + "/" + ac.getVolValue();
@@ -332,10 +329,6 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 		String pthStem = pth.substring(0, pth.length() - 4);
 
-		LapdftextXMLDocument xml = doc.convertToLapdftextXmlFormat();
-		File xmlFile = new File(wd + "/" + pthStem + "_lapdf.xml");
-		FileWriter writer = new FileWriter(xmlFile);
-		XmlBindingTools.generateXML(xml, writer);
 		ftd.setXmlFile(pthStem + "_lapdf.xml");
 
 		ftd.setCitation(ac);
@@ -373,20 +366,11 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 			
 			if (id.getIdType().equals("pmc")) {
 
-				File f = new File(wd + "/" + pthStem + "_pmc.xml");
-				this.loadPmcFileToDisk(id.getIdValue(), f);
+				File f = new File(wd + "/" + pthStem + ".nxml");
+				if( !f.exists() )
+					this.loadPmcFileToDisk(id.getIdValue(), f);
 
-			} else if (id.getIdType().equals("doi")) {
-
-				File f1 = new File(wd + "/" + pthStem + "_els.xml");
-				File f2 = new File(wd + "/" + pthStem + "_els.html");
-				File f3 = new File(wd + "/" + pthStem + "_els.txt");
-
-				/*this.loadElsevierXmlFileToDiskFromDoi(id.getIdValue(), f1);
-				this.loadElsevierHtmlFileToDiskFromDoi(id.getIdValue(), f2);
-				this.loadElsevierTextFileToDiskFromDoi(id.getIdValue(), f3);*/
-
-			}
+			} 
 
 		}
 
@@ -395,9 +379,9 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		return adId;
 
 	}
+	
 
-	public String retrieveTextFromFtd(FTD ftd) throws SQLException,
-			IOException, TransformerException, FileNotFoundException {
+	public String retrieveTextFromFtd(FTD ftd) throws Exception {
 
 		Long ftdId = ftd.getVpdmfId();
 		String pdfPath = ftd.getName();
@@ -406,115 +390,78 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 		String pmcXmlPath = pdfPath.substring(0, pdfPath.lastIndexOf(".pdf"))
 				+ "_pmc.xml";
+		String nxmlPath = pdfPath.substring(0, pdfPath.lastIndexOf(".pdf"))
+				+ ".nxml";
 
 		if (pmcXmlPath == null || pmcXmlPath.equals("null"))
 			throw new FileNotFoundException("Can't find " + pmcXmlPath);
 
 		String wd = this.getCoreDao().getWorkingDirectory();
 		File pmcXmlFile = new File(wd + "/" + pmcXmlPath);
+		File nxmlFile = new File(wd + "/" + nxmlPath);
 
-		if (!pmcXmlFile.exists())
-			return "";
+		if(pmcXmlFile.exists() && !nxmlFile.exists())
+			FileUtils.copyFile(pmcXmlFile, nxmlFile);
 		
-		String txtPath = pdfPath.substring(0, pdfPath.lastIndexOf(".pdf"))
-				+ ".txt";
-		File txtFile = new File(wd + "/" + txtPath);
-		if (txtFile.exists()) {
+		if(pmcXmlFile.exists())
+			pmcXmlFile.delete();
+		
+		String s = ".nxml$";
+		File txtFile = new File(pmcXmlFile.getPath().replaceAll(s, ".txt"));
+		File annFile = new File(pmcXmlFile.getPath().replaceAll(s, ".so"));
+		File logFile = new File(pmcXmlFile.getPath().replaceAll(s, "_nxml2txt.log"));
+		txtFile.getParentFile().mkdirs();
+
+		if(annFile.exists()) {
 			return FileUtils.readFileToString(txtFile);
 		}
+		
+		File nxml2txtDir = Converters.readAppDirectory("nxml2txt", new File(wd));
+		File nxml2txtApp = new File(nxml2txtDir.getPath() + "/nxml2txt");
+			
+		String command = "python " + nxml2txtApp.getPath() + " " + nxmlFile.getPath() 
+				+ " " + txtFile.getPath()
+				+ " " + annFile.getPath() + "";
 
-		FileReader inputReader = new FileReader(pmcXmlFile);
-		StringWriter outputWriter = new StringWriter();
+		if( txtFile.getPath().contains(" ") )
+			command = "python " + nxml2txtApp.getPath() + " \"" + nxmlFile.getPath() 
+			+ "\" \"" + txtFile.getPath()
+			+ "\" \"" + annFile.getPath() + "\"";
 
-		TransformerFactory tf = TransformerFactory.newInstance();
+		ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+		Map<String,String> env = pb.environment();
+		env.put("PYTHONPATH", "/usr/local/lib/python2.7/site-packages");
+		Process p = pb.start();
 
-		// stylesheet
-		Resource xslResource = new ClassPathResource(
-				"jatsPreviewStyleSheets/xslt/main/jats-html-textOnly.xsl");
-		StreamSource xslt = new StreamSource(xslResource.getInputStream());
-		Transformer transformer = tf.newTransformer(xslt);
+		InputStream in = p.getErrorStream();
+		BufferedInputStream buf = new BufferedInputStream(in);
+		InputStreamReader inread = new InputStreamReader(buf);
+		BufferedReader bufferedreader = new BufferedReader(inread);
+		String line, out = "";
 
-		StreamSource source = new StreamSource(inputReader);
-		StreamResult result = new StreamResult(outputWriter);
-		transformer.transform(source, result);
-		String html = outputWriter.toString();
-
-		String htmlPath = pdfPath.substring(0, pdfPath.lastIndexOf(".pdf"))
-				+ ".html";
-		FileUtils.writeStringToFile(new File(wd + "/" + htmlPath), html);
-
-		Document doc = Jsoup.parse(html);
-
-		String plainText = title + "\n" + abst + "\n";
-
-		Elements bodyEls = doc.select("div");
-		for (Element bodyEl : bodyEls) {
-			for (Node n : bodyEl.select("tr")) {
-				n.remove();
+		while ((line = bufferedreader.readLine()) != null) {
+			out += line;
+		}
+		
+		try {
+			if (p.waitFor() != 0) {
+				System.err.println("CMD: " + command);
+				System.err.println("RETURNED ERROR: " + out);
 			}
-			for (Node n : bodyEl.getElementsByClass("object-id")) {
-				n.remove();
-			}
-			for (Node n : bodyEl.select("a")) {
-				this.addFormattingSuffixes((Element) n, "A");
-			}
-			for (Node n : bodyEl.select("i")) {
-				this.addFormattingSuffixes((Element) n, "I");
-			}
-			for (Node n : bodyEl.select("b")) {
-				this.addFormattingSuffixes((Element) n, "B");
-			}
-			for (Node n : bodyEl.select("sup")) {
-				this.addFormattingSuffixes((Element) n, "SUP");
-			}
-			for (Node n : bodyEl.select("sub")) {
-				this.addFormattingSuffixes((Element) n, "SUB");
-			}
-			for (Node n : bodyEl.select("h1")) {
-				this.addFormattingSuffixes((Element) n, "H");
-			}
-			for (Node n : bodyEl.select("h2")) {
-				this.addFormattingSuffixes((Element) n, "H");
-			}
-			for (Node n : bodyEl.select("h3")) {
-				this.addFormattingSuffixes((Element) n, "H");
-			}
-			for (Node n : bodyEl.select("h4")) {
-				this.addFormattingSuffixes((Element) n, "H");
-			}
-			for (Node n : bodyEl.select("p")) {
-				this.addFormattingSuffixes((Element) n, "P");
-			}
+		} catch (Exception e) {
+			System.err.println(out);
+		} finally {
+			// Close the InputStream
+			bufferedreader.close();
+			inread.close();
+			buf.close();
+			in.close();
 		}
 
-		String t = doc.text();
-		t = t.replaceAll("__s_H__", "\n");
-		t = t.replaceAll("__s_P__", "");
-
-		// put a period after headings for sentence detection
-		t = t.replaceAll("__e_H__", ".\n");
-		t = t.replaceAll("\\.\\s*\\.", ".");
-		t = t.replaceAll("__e_P__", "\n") + "\n";
-
-		plainText += t;
-
-		FileUtils.writeStringToFile(txtFile, plainText);
-
-		return plainText;
+		return FileUtils.readFileToString(txtFile);
 
 	}
-	
-	private Element addFormattingSuffixes(Element el, String suffix) {
-		String t = el.text();;
-		String s = " __s_" + suffix + "__ ";
-		String e = " __e_" + suffix + "__ ";
-		
-		if( t.indexOf("__s_") == -1  && t.length() > 0) {
-			el.text( s + t + e );
-		} 
-		
-		return el;
-	}
+
 
 	public void loadPmcFileToDisk(String pmcid, File f) throws Exception {
 		String eFetchUrl = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id="
@@ -669,6 +616,10 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 		String pdfStem = pdf.getName().replaceAll("\\.pdf", "");
 		File swfFile = new File(pdf.getParent() + "/" + pdfStem + ".swf");
 
+		if( swfFile.exists() ) {
+			return swfFile.getPath();
+		}
+		
 		Process p = Runtime.getRuntime().exec(
 				swfPath + " " + pdf.getPath() + " -o " + swfFile.getPath());
 
@@ -931,7 +882,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 
 			ce.connectToDB();
 			ce.turnOffAutoCommit();
-
+			
 			this.addArticlesToCorpusInTrans(keySet, corpusName);
 
 			ce.commitTransaction();
@@ -1230,7 +1181,7 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 			String stemPath = wd + "/" + pdfPath.substring(0, pdfPath.lastIndexOf("."));
 			String stem = pdfPath.substring(1, pdfPath.lastIndexOf("."));
 			
-			File pmcXmlFile = new File(stemPath + "_pmc.xml");
+			File pmcXmlFile = new File(stemPath + ".nxml");
 			File txtFile = new File(stemPath + ".txt");
 			
 			if( txtFile.exists() ) {

@@ -79,8 +79,7 @@ public interface ExtendedDigitalLibraryDao {
 
 	//public long addFtdToArticleCitation(ArticleCitation ac) throws Exception;
 	
-	public long addFtdToArticleCitation(LapdfDocument doc, 
-			ArticleCitation ac, 
+	public long addFtdToArticleCitation(ArticleCitation ac, 
 			File pdf) throws Exception;
 	
 	public String addSwfToFtd(File pdf, FTD ftd) throws Exception, IOException;
@@ -98,7 +97,7 @@ public interface ExtendedDigitalLibraryDao {
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~
 	
 	public String retrieveTextFromFtd(FTD ftd) throws SQLException, IOException, 
-			TransformerException, FileNotFoundException;
+			TransformerException, FileNotFoundException, Exception;
 
 	public String listFileNamesInCorpus(String corpusName) throws Exception;
 
