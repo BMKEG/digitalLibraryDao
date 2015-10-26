@@ -71,7 +71,7 @@ public class AddBratAnnotations extends JCasAnnotator_ImplBase {
 	private StringMetric metric2;
 	
 	private static Logger logger = Logger
-			.getLogger(AddFragmentsAndCodes.class);
+			.getLogger(AddBratAnnotations.class);
 
 	public void initialize(UimaContext context)
 			throws ResourceInitializationException {

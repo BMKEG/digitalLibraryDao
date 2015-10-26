@@ -60,4 +60,6 @@ public interface ExtendedDigitalLibraryService {
 
 	byte[] packageCorpusArchive(Long corpusId) throws Exception;
 
+	void cleanUpEmptyFragments() throws Exception;
+
 }

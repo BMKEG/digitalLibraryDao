@@ -134,9 +134,9 @@ public class SaveAsBratFragments extends JCasAnnotator_ImplBase {
 				for (UimaBioCAnnotation a : JCasUtil.selectCovered(UimaBioCAnnotation.class, uiP)) {
 					
 					Map<String, String> aInf = BioCUtils.convertInfons(a.getInfons());
-					if( !aInf.containsKey("type") || !aInf.get("type").equals(this.annotationType) ) {
+					if( !(aInf.containsKey("type") 
+							&& aInf.get("type").equals(this.annotationType)) )
 						continue;
-					}
 										
 					MapEntry me = (MapEntry) a.getInfons(0);
 					String s = "T" + i  + "\t" + aInf.containsKey("epistemicCode") + " " + 

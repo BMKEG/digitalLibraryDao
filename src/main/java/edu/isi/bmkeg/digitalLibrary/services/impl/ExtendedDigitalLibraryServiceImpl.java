@@ -659,8 +659,9 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			LapdfVpdmfEngine lapdfEng = new LapdfVpdmfEngine();
 
-			File xmlFile = new File(wdPth + ftd.getXmlFile());
-			File pmcXmlFile = new File(wdPth + "/" +  ftd.getPmcXmlFile());
+			String stem = ftd.getName().replaceAll("\\.pdf", "");
+			File xmlFile = new File(wdPth + "/" + stem + "_lapdf.xml");
+			File pmcXmlFile = new File(wdPth +  "/" + stem + ".nxml");
 			String xml = FileUtils.readFileToString(xmlFile, "UTF-8");
 
 			LapdfDocument document = lapdfEng.blockifyXml(xml);
@@ -952,6 +953,9 @@ public class ExtendedDigitalLibraryServiceImpl implements
 
 			String wd = coreDao.getWorkingDirectory();
 			File laSwfFile = new File(wd + "/" + ftd.getName().replaceAll(".pdf$", ".swf"));
+			
+			logger.debug("SWF File: " + laSwfFile.getPath() + ", exists: " + laSwfFile.exists() );
+			
 			byte[] laSwf = Converters.fileContentsToBytesArray(laSwfFile);
 
 			return laSwf;
@@ -1125,11 +1129,9 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			File swf = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".swf");
 			File lapdf = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_lapdf.xml");
 			File xml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".nxml");
-			File html = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".html");
 			File txt = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+".txt");
-			File elsXml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.xml");
-			File elsHtml = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.html");
-			//File elsTxt = new File(wd+"/pdfs/"+journal+"/"+year+"/"+volume+"/"+pmid+"_els.txt");
+			
+			logger.debug("SWF File: " + pdf.getPath() + ", exists: " + pdf.exists() );
 			
 			String s = LightViewInstance.INDEX_TUPLE_SEPARATOR; 
 			String newFields = lvi.getIndexTupleFields() + s + 
@@ -1140,7 +1142,7 @@ public class ExtendedDigitalLibraryServiceImpl implements
 			
 			String newIndex = lvi.getIndexTuple() + s + 
 					(pdf.exists() && swf.exists() && lapdf.exists()) + s + 
-					(xml.exists() || elsXml.exists()) + s + 
+					(xml.exists()) + s + 
 					(txt.exists() );
 			
 			lvi.setIndexTuple(newIndex);
@@ -1478,6 +1480,46 @@ public class ExtendedDigitalLibraryServiceImpl implements
 		
 		return null;
 
+	}
+	
+	
+	@Override
+	public void cleanUpEmptyFragments() throws Exception {
+		
+		String sql = "SELECT FTDFragment.vpdmfId " +
+				"FROM FTDFragment " +
+				"LEFT JOIN FTDFragmentBlock ON " +
+				"FTDFragment.vpdmfId=FTDFragmentBlock.fragment_id" + 
+				"WHERE FTDFragmentBlock.vpdmfId IS NULL";
+		
+		init();
+		CoreDao coreDao = this.extDigLibDao.getCoreDao();
+		coreDao.connectToDb();
+		
+		ResultSet rs = coreDao.getCe().executeRawSqlQuery(sql);
+		
+		while( rs.next() ) {
+			Long id = rs.getLong("FTDFragment.vpdmfId");
+
+			String delSql = "DELETE " +
+					"FROM FTDFragment " +
+					"WHERE FTDFragment.vpdmfId=" + id;
+
+			coreDao.getCe().executeRawUpdateQuery(delSql);
+
+			delSql = "DELETE " +
+					"FROM ViewTable" +
+					"WHERE FTDFragment.vpdmfId=" + id;
+
+			coreDao.getCe().executeRawUpdateQuery(delSql);
+
+		}
+		
+		
+		
+		coreDao.commitTransaction();
+		coreDao.closeDbConnection();
+		
 	}
 	
 }
