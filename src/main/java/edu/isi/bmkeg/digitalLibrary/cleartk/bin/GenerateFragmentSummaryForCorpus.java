@@ -21,7 +21,7 @@ import edu.isi.bmkeg.digitalLibrary.cleartk.annotators.SentencePerLineFTDWriter;
 import edu.isi.bmkeg.digitalLibrary.cleartk.cr.DigitalLibraryCollectionReader;
 import edu.isi.bmkeg.digitalLibrary.cleartk.cr.EpistemicsSegmentFragmentCollectionReader;
 
-public class TokenizeFragments {
+public class GenerateFragmentSummaryForCorpus {
 
 	public static class Options {
 

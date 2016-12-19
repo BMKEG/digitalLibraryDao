@@ -458,7 +458,10 @@ public class ExtendedDigitalLibraryDaoImpl implements ExtendedDigitalLibraryDao 
 			in.close();
 		}
 
-		return FileUtils.readFileToString(txtFile);
+		if( txtFile.exists() )
+			return FileUtils.readFileToString(txtFile);
+		else
+			return "";
 
 	}
 
