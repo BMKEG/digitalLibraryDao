@@ -269,7 +269,7 @@
 		</dependency>
 
 		<!-- Omitting versions of clearTk dependencies because they are handle 
-			in the dependency management imported from cleartk-release -->
+			in the dependency management imported from cleartk-release 
 		<dependency>
 			<groupId>org.cleartk</groupId>
 			<artifactId>cleartk-eval</artifactId>
@@ -333,7 +333,7 @@
 		<dependency>
 			<groupId>org.cleartk</groupId>
 			<artifactId>cleartk-type-system</artifactId>
-		</dependency>
+		</dependency>-->
 
 		<dependency>
 			<groupId>bioc</groupId>

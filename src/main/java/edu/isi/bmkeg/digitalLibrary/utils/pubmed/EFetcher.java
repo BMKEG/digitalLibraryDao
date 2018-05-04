@@ -1,23 +1,22 @@
 package edu.isi.bmkeg.digitalLibrary.utils.pubmed;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.xml.sax.InputSource;
 
 import edu.isi.bmkeg.digitalLibrary.model.citations.ArticleCitation;
-import edu.isi.bmkeg.digitalLibrary.model.citations.Journal;
 
 public class EFetcher 
 {	
@@ -28,7 +27,7 @@ public class EFetcher
 	private static String PUBMED = "pubmed";
 	
 	private String baseQueryPrefix = 
-			"http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=" + PUBMED + "&id=";
+			"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=" + PUBMED + "&id=";
 	private String baseQuerySuffix = "&retmode=xml";
 	
 	private int pageCapacity = 500;
@@ -160,9 +159,17 @@ public class EFetcher
 		logger.info("COUNT: " + (this.startOfPage + this.counter) + ", QUERY: " + baseQueryPrefix + idList + baseQuerySuffix);
 		
 		URL url = new URL(baseQueryPrefix + idList + baseQuerySuffix);		
-        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-
-        SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+		BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+		
+		// DEBUGGING PIECES FOR WHEN THIS BREAKS
+		//FileUtils.copyURLToFile(url, new File("/Users/Gully/Desktop/efetch2.xml"));
+		//BufferedReader in = new BufferedReader(new FileReader("/Users/Gully/Desktop/efetch.xml"));
+        
+        SAXParserFactory spf = SAXParserFactory.newInstance(); 
+        spf.setNamespaceAware(false);
+        spf.setValidating(false);
+        SAXParser parser = spf.newSAXParser();
+                
         InputSource is = new InputSource(in);
         EfetchHandler handler = new EfetchHandler();
         parser.parse(is, handler);
